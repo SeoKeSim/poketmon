@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<head><title>포켓몬 검색</title></head>
+<body>
+<h1>포켓몬 검색</h1>
+{{#error}}<p style="color:red;">{{error}}</p>{{/error}}
+<form method="post" action="/search">
+    <input type="text" name="name" placeholder="이름 입력">
+    <button type="submit">검색</button>
+</form>
+</body>
+</html>
