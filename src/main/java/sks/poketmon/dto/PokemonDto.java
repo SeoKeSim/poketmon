@@ -9,6 +9,7 @@ public class PokemonDto {
 
     private int id;
     private String name;
+    private String koreanName;
     private int height;
     private int weight;
     private List<TypeDto> types;
@@ -33,6 +34,14 @@ public class PokemonDto {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getKoreanName() {
+        return koreanName;
+    }
+
+    public void setKoreanName(String koreanName) {
+        this.koreanName = koreanName;
     }
 
     public int getHeight() {

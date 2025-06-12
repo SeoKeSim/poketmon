@@ -17,7 +17,7 @@ public class DataInitializationService implements ApplicationRunner {
         // 1세대~9세대까지 약 1010마리 (필요에 따라 조정)
 
         // 처음에는 적은 수로 테스트 해보세요
-        int maxPokemon = 151; // 1세대만 먼저 로딩
+        int maxPokemon = 1010; // 1세대만 먼저 로딩
 
         // 백그라운드에서 실행
         new Thread(() -> {

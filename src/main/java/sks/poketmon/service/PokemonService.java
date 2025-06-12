@@ -46,6 +46,10 @@ public class PokemonService {
                 savePokemonNameFromSpecies(pokemon.getId());
             }
 
+            // [추가] 5. pokemonDto에 한글 이름 세팅
+            Optional<PokemonName> nameEntity = pokemonNameRepository.findByPokemonId(pokemon.getId());
+            nameEntity.ifPresent(name -> pokemon.setKoreanName(name.getKoreanName()));
+
             return pokemon;
 
         } catch (HttpClientErrorException.NotFound e) {

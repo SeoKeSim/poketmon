@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>포켓몬 정보 - {{pokemon.koreanName}}</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="/css/result.css">
 </head>
 <body>
-<div class="result-container">
+<div class="result-container type-{{pokemon.types.0.type.name}}">
     <div class="header">
         <div class="pokemon-id">#{{pokemon.id}}</div>
         <div class="pokemon-name">{{pokemon.koreanName}}</div>
@@ -52,7 +52,7 @@
                 <div class="stat-row">
                     <div class="stat-name">
                         {{#pokemonService}}
-                            {{#getKoreanStatName}}{{stat.name}}{{/getKoreanStatName}}
+                            {{#getKoreanStatName}}{{stat.stat.name}}{{/getKoreanStatName}}
                         {{/pokemonService}}
                     </div>
                     <div class="stat-bar">
@@ -63,8 +63,9 @@
             {{/pokemon.stats}}
         </div>
 
-        <a href="/" class="back-btn">다시 검색하기</a>
+        <a href="/" class="back-btn fixed-theme">다시 검색하기</a>
     </div>
+
 </div>
 </body>
 </html>

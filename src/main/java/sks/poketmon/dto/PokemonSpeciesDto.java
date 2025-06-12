@@ -54,6 +54,16 @@ public class PokemonSpeciesDto {
         return getNameByLanguage("ko");
     }
 
+    public String getKoreanNameByStream() {
+        if (names == null) return null;
+
+        return names.stream()
+                .filter(n -> "ko".equals(n.getLanguage().getName()))
+                .map(NameDto::getName)
+                .findFirst()
+                .orElse(null);
+    }
+
     // 내부 클래스들
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class NameDto {
@@ -98,4 +108,5 @@ public class PokemonSpeciesDto {
             }
         }
     }
+
 }

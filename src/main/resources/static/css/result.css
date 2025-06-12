@@ -1,0 +1,475 @@
+body {
+    font-family: 'Arial', sans-serif;
+    background: white;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.result-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+}
+
+/* 기본 헤더 스타일 (타입 색상으로 덮어씀) */
+.header {
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* 이미지 영역 */
+.pokemon-id {
+    font-size: 1.2rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.pokemon-name {
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.pokemon-name-english {
+    font-size: 1.5rem;
+    opacity: 0.8;
+    margin-top: 0.5rem;
+}
+
+.content {
+    padding: 2rem;
+}
+
+.pokemon-image {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.pokemon-image img {
+    max-width: 200px;
+    height: auto;
+    border-radius: 10px;
+    background: #f8f9fa;
+    padding: 1rem;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.info-card {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 15px;
+    border-left: 4px solid #4CAF50;
+}
+
+.info-card h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.basic-info p {
+    margin-bottom: 0.8rem;
+    color: #555;
+    font-size: 1.1rem;
+}
+
+.basic-info strong {
+    color: #333;
+}
+
+.types {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.type-tag {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+/* 포켓몬 타입별 색상 */
+.type-normal { background: #A8A878; }
+.type-fire { background: #F08030; }
+.type-water { background: #6890F0; }
+.type-electric { background: #F8D030; }
+.type-grass { background: #78C850; }
+.type-ice { background: #98D8D8; }
+.type-fighting { background: #C03028; }
+.type-poison { background: #A040A0; }
+.type-ground { background: #E0C068; }
+.type-flying { background: #A890F0; }
+.type-psychic { background: #F85888; }
+.type-bug { background: #A8B820; }
+.type-rock { background: #B8A038; }
+.type-ghost { background: #705898; }
+.type-dragon { background: #7038F8; }
+.type-dark { background: #705848; }
+.type-steel { background: #B8B8D0; }
+.type-fairy { background: #EE99AC; }
+
+.stats-container {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 15px;
+    border-left: 4px solid #4CAF50;
+}
+
+.stats-container h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.stat-name {
+    min-width: 80px;
+    font-weight: bold;
+    color: #555;
+}
+
+.stat-bar {
+    flex: 1;
+    background: #e0e0e0;
+    border-radius: 10px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.8s ease;
+    background: #4CAF50;
+}
+
+.stat-value {
+    min-width: 40px;
+    text-align: right;
+    font-weight: bold;
+    color: #333;
+}
+
+.back-btn {
+    display: inline-block;
+    background: #4CAF50;
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 10px;
+    margin-top: 2rem;
+    transition: background-color 0.3s;
+}
+
+.back-btn:hover {
+    background: #45a049;
+}
+
+/* ✅ 타입별 테마 전체 적용 */
+/* 노말 */
+.result-container.type-normal .header,
+.result-container.type-normal .back-btn,
+.result-container.type-normal .stat-fill {
+    background: #A8A878;
+    color: #2d2d2d;
+}
+.result-container.type-normal .back-btn:hover {
+    background: #999966;
+}
+.result-container.type-normal .info-card,
+.result-container.type-normal .stats-container {
+    border-left: 4px solid #A8A878;
+}
+
+/* 불꽃 */
+.result-container.type-fire .header,
+.result-container.type-fire .back-btn,
+.result-container.type-fire .stat-fill {
+    background: #F08030;
+    color: #2d2d2d;
+}
+.result-container.type-fire .back-btn:hover {
+    background: #db6e1a;
+}
+.result-container.type-fire .info-card,
+.result-container.type-fire .stats-container {
+    border-left: 4px solid #F08030;
+}
+
+/* 물 */
+.result-container.type-water .header,
+.result-container.type-water .back-btn,
+.result-container.type-water .stat-fill {
+    background: #6890F0;
+    color: #2d2d2d;
+}
+.result-container.type-water .back-btn:hover {
+    background: #5378e0;
+}
+.result-container.type-water .info-card,
+.result-container.type-water .stats-container {
+    border-left: 4px solid #6890F0;
+}
+
+/* 풀 */
+.result-container.type-grass .header,
+.result-container.type-grass .back-btn,
+.result-container.type-grass .stat-fill {
+    background: #78C850;
+    color: #2d2d2d;
+}
+.result-container.type-grass .back-btn:hover {
+    background: #6ab843;
+}
+.result-container.type-grass .info-card,
+.result-container.type-grass .stats-container {
+    border-left: 4px solid #78C850;
+}
+
+/* 전기 */
+.result-container.type-electric .header,
+.result-container.type-electric .back-btn,
+.result-container.type-electric .stat-fill {
+    background: #F8D030;
+    color: #2d2d2d;
+}
+.result-container.type-electric .back-btn:hover {
+    background: #e6c020;
+}
+.result-container.type-electric .info-card,
+.result-container.type-electric .stats-container {
+    border-left: 4px solid #F8D030;
+}
+
+/* 얼음 */
+.result-container.type-ice .header,
+.result-container.type-ice .back-btn,
+.result-container.type-ice .stat-fill {
+    background: #98D8D8;
+    color: #2d2d2d;
+}
+.result-container.type-ice .back-btn:hover {
+    background: #84c7c7;
+}
+.result-container.type-ice .info-card,
+.result-container.type-ice .stats-container {
+    border-left: 4px solid #98D8D8;
+}
+
+/* 격투 */
+.result-container.type-fighting .header,
+.result-container.type-fighting .back-btn,
+.result-container.type-fighting .stat-fill {
+    background: #C03028;
+}
+.result-container.type-fighting .back-btn:hover {
+    background: #a52822;
+}
+.result-container.type-fighting .info-card,
+.result-container.type-fighting .stats-container {
+    border-left: 4px solid #C03028;
+}
+
+/* 독 */
+.result-container.type-poison .header,
+.result-container.type-poison .back-btn,
+.result-container.type-poison .stat-fill {
+    background: #A040A0;
+}
+.result-container.type-poison .back-btn:hover {
+    background: #8c338c;
+}
+.result-container.type-poison .info-card,
+.result-container.type-poison .stats-container {
+    border-left: 4px solid #A040A0;
+}
+
+/* 땅 */
+.result-container.type-ground .header,
+.result-container.type-ground .back-btn,
+.result-container.type-ground .stat-fill {
+    background: #E0C068;
+    color: #2d2d2d;
+}
+.result-container.type-ground .back-btn:hover {
+    background: #d1b255;
+}
+.result-container.type-ground .info-card,
+.result-container.type-ground .stats-container {
+    border-left: 4px solid #E0C068;
+}
+
+/* 비행 */
+.result-container.type-flying .header,
+.result-container.type-flying .back-btn,
+.result-container.type-flying .stat-fill {
+    background: #A890F0;
+}
+.result-container.type-flying .back-btn:hover {
+    background: #9984e6;
+}
+.result-container.type-flying .info-card,
+.result-container.type-flying .stats-container {
+    border-left: 4px solid #A890F0;
+}
+
+/* 에스퍼 */
+.result-container.type-psychic .header,
+.result-container.type-psychic .back-btn,
+.result-container.type-psychic .stat-fill {
+    background: #F85888;
+    color: #2d2d2d;
+}
+.result-container.type-psychic .back-btn:hover {
+    background: #e04d77;
+}
+.result-container.type-psychic .info-card,
+.result-container.type-psychic .stats-container {
+    border-left: 4px solid #F85888;
+}
+
+/* 벌레 */
+.result-container.type-bug .header,
+.result-container.type-bug .back-btn,
+.result-container.type-bug .stat-fill {
+    background: #A8B820;
+    color: #2d2d2d;
+}
+.result-container.type-bug .back-btn:hover {
+    background: #94a61c;
+}
+.result-container.type-bug .info-card,
+.result-container.type-bug .stats-container {
+    border-left: 4px solid #A8B820;
+}
+
+/* 바위 */
+.result-container.type-rock .header,
+.result-container.type-rock .back-btn,
+.result-container.type-rock .stat-fill {
+    background: #B8A038;
+    color: #2d2d2d;
+}
+.result-container.type-rock .back-btn:hover {
+    background: #a38e30;
+}
+.result-container.type-rock .info-card,
+.result-container.type-rock .stats-container {
+    border-left: 4px solid #B8A038;
+}
+
+/* 고스트 */
+.result-container.type-ghost .header,
+.result-container.type-ghost .back-btn,
+.result-container.type-ghost .stat-fill {
+    background: #705898;
+}
+.result-container.type-ghost .back-btn:hover {
+    background: #604c85;
+}
+.result-container.type-ghost .info-card,
+.result-container.type-ghost .stats-container {
+    border-left: 4px solid #705898;
+}
+
+/* 드래곤 */
+.result-container.type-dragon .header,
+.result-container.type-dragon .back-btn,
+.result-container.type-dragon .stat-fill {
+    background: #7038F8;
+}
+.result-container.type-dragon .back-btn:hover {
+    background: #612ce8;
+}
+.result-container.type-dragon .info-card,
+.result-container.type-dragon .stats-container {
+    border-left: 4px solid #7038F8;
+}
+
+/* 악 */
+.result-container.type-dark .header,
+.result-container.type-dark .back-btn,
+.result-container.type-dark .stat-fill {
+    background: #705848;
+}
+.result-container.type-dark .back-btn:hover {
+    background: #5c473a;
+}
+.result-container.type-dark .info-card,
+.result-container.type-dark .stats-container {
+    border-left: 4px solid #705848;
+}
+
+/* 강철 */
+.result-container.type-steel .header,
+.result-container.type-steel .back-btn,
+.result-container.type-steel .stat-fill {
+    background: #B8B8D0;
+    color: #2d2d2d;
+}
+.result-container.type-steel .back-btn:hover {
+    background: #a3a3c0;
+}
+.result-container.type-steel .info-card,
+.result-container.type-steel .stats-container {
+    border-left: 4px solid #B8B8D0;
+}
+
+/* 페어리 */
+.result-container.type-fairy .header,
+.result-container.type-fairy .back-btn,
+.result-container.type-fairy .stat-fill {
+    background: #EE99AC;
+    color: #2d2d2d;
+}
+.result-container.type-fairy .back-btn:hover {
+    background: #e08297;
+}
+.result-container.type-fairy .info-card,
+.result-container.type-fairy .stats-container {
+    border-left: 4px solid #EE99AC;
+}
+
+.back-btn.fixed-theme {
+    background: #f8f9fa !important;
+    color: black !important;
+    border: none;
+}
+
+.back-btn.fixed-theme:hover {
+    background: #f8f9fa !important;
+}
+
+@media (max-width: 768px) {
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .result-container {
+        margin: 1rem;
+    }
+
+    .pokemon-image img {
+        max-width: 150px;
+    }
+}
