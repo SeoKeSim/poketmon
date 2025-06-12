@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 검색</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .title {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .pokemon-logo {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-form {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .error {
+            background: #ffe6e6;
+            color: #d63031;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+            border-left: 4px solid #d63031;
+        }
+
+        .help-text {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            line-height: 1.5;
+        }
+
+        .examples {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-top: 1rem;
+        }
+
+        .examples h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .example-list {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="pokemon-logo">⚡</div>
+    <h1 class="title">포켓몬 검색</h1>
+
+    <form class="search-form" action="/search" method="post">
+        <input type="text"
+               name="query"
+               class="search-input"
+               placeholder="포켓몬 이름을 입력하세요 (한글/영어/번호)"
+               required>
+        <button type="submit" class="search-btn">검색하기</button>
+    </form>
+
+    {{#error}}
+        <div class="error">
+            {{error}}
+        </div>
+    {{/error}}
+
+    <div class="examples">
+        <h4>검색 예시:</h4>
+        <div class="example-list">
+            한글: 피카츄, 파이리, 꼬부기<br>
+            영어: pikachu, charmander, squirtle<br>
+            번호: 1, 25, 150
+        </div>
+    </div>
+
+    <div class="help-text">
+        포켓몬의 이름(한글/영어) 또는 도감 번호로 검색할 수 있습니다.<br>
+        현재 1세대 포켓몬의 한글 검색을 지원합니다.
+    </div>
+</div>
+</body>
+</html>

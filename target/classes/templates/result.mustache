@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 정보 - {{pokemon.name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .pokemon-id {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        .pokemon-name {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .pokemon-image {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .pokemon-image img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 10px;
+            background: #f8f9fa;
+            padding: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-card h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .basic-info p {
+            margin-bottom: 0.8rem;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        .basic-info strong {
+            color: #333;
+        }
+
+        .types {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .type-tag {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .type-normal { background: #A8A878; }
+        .type-fire { background: #F08030; }
+        .type-water { background: #6890F0; }
+        .type-electric { background: #F8D030; }
+        .type-grass { background: #78C850; }
+        .type-ice { background: #98D8D8; }
+        .type-fighting { background: #C03028; }
+        .type-poison { background: #A040A0; }
+        .type-ground { background: #E0C068; }
+        .type-flying { background: #A890F0; }
+        .type-psychic { background: #F85888; }
+        .type-bug { background: #A8B820; }
+        .type-rock { background: #B8A038; }
+        .type-ghost { background: #705898; }
+        .type-dragon { background: #7038F8; }
+        .type-dark { background: #705848; }
+        .type-steel { background: #B8B8D0; }
+        .type-fairy { background: #EE99AC; }
+
+        .stats-container {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stats-container h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        .stat-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+
+        .stat-name {
+            min-width: 80px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .stat-bar {
+            flex: 1;
+            background: #e0e0e0;
+            border-radius: 10px;
+            height: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-fill {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .stat-value {
+            min-width: 40px;
+            text-align: right;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .back-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-top: 2rem;
+            transition: transform 0.3s;
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .container {
+                margin: 1rem;
+            }
+
+            body {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="pokemon-id">#{{pokemon.id}}</div>
+        <div class="pokemon-name">{{pokemon.name}}</div>
+    </div>
+
+    <div class="content">
+        {{#pokemon.sprites.frontDefault}}
+            <div class="pokemon-image">
+                <img src="{{pokemon.sprites.frontDefault}}" alt="{{pokemon.name}}">
+            </div>
+        {{/pokemon.sprites.frontDefault}}
+
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>기본 정보</h3>
+                <div class="basic-info">
+                    <p><strong>이름:</strong> {{pokemon.name}}</p>
+                    <p><strong>번호:</strong> #{{pokemon.id}}</p>
+                    <p><strong>키:</strong> {{pokemon.height}}0cm</p>
+                    <p><strong>몸무게:</strong> {{pokemon.weight}}kg</p>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>타입</h3>
+                <div class="types">
+                    {{#pokemon.types}}
+                        <span class="type-tag type-{{type.name}}">
+                            {{#pokemonService}}
+                                {{#getKoreanTypeName}}{{type.name}}{{/getKoreanTypeName}}
+                            {{/pokemonService}}
+                        </span>
+                    {{/pokemon.types}}
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-container">
+            <h3>능력치</h3>
+            {{#pokemon.stats}}
+                <div class="stat-row">
+                    <div class="stat-name">
+                        {{#pokemonService}}
+                            {{#getKoreanStatName}}{{stat.name}}{{/getKoreanStatName}}
+                        {{/pokemonService}}
+                    </div>
+                    <div class="stat-bar">
+                        <div class="stat-fill" style="width: {{baseStat}}%"></div>
+                    </div>
+                    <div class="stat-value">{{baseStat}}</div>
+                </div>
+            {{/pokemon.stats}}
+        </div>
+
+        <a href="/" class="back-btn">다시 검색하기</a>
+    </div>
+</div>
+</body>
+</html>
