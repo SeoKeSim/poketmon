@@ -5,71 +5,46 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import sks.poketmon.dto.PokemonDto;
+import sks.poketmon.dto.PokemonSpeciesDto;
+import sks.poketmon.entity.PokemonName;
+import sks.poketmon.repository.PokemonNameRepository;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class PokemonService {
 
     private final RestTemplate restTemplate;
+    private final PokemonNameRepository pokemonNameRepository;
+
     private static final String POKEAPI_BASE_URL = "https://pokeapi.co/api/v2/pokemon/";
-
-    // 한국어 매핑 (일부 포켓몬만 예시)
-    private static final Map<String, String> KOREAN_TO_ENGLISH = new HashMap<>();
-
-    static {
-        // 1세대 포켓몬 한글 매핑 (예시)
-        KOREAN_TO_ENGLISH.put("피카츄", "pikachu");
-        KOREAN_TO_ENGLISH.put("라이츄", "raichu");
-        KOREAN_TO_ENGLISH.put("파이리", "charmander");
-        KOREAN_TO_ENGLISH.put("리자드", "charmeleon");
-        KOREAN_TO_ENGLISH.put("리자몽", "charizard");
-        KOREAN_TO_ENGLISH.put("꼬부기", "squirtle");
-        KOREAN_TO_ENGLISH.put("어니부기", "wartortle");
-        KOREAN_TO_ENGLISH.put("거북왕", "blastoise");
-        KOREAN_TO_ENGLISH.put("이상해씨", "bulbasaur");
-        KOREAN_TO_ENGLISH.put("이상해풀", "ivysaur");
-        KOREAN_TO_ENGLISH.put("이상해꽃", "venusaur");
-        KOREAN_TO_ENGLISH.put("캐터피", "caterpie");
-        KOREAN_TO_ENGLISH.put("단데기", "metapod");
-        KOREAN_TO_ENGLISH.put("버터플", "butterfree");
-        KOREAN_TO_ENGLISH.put("뿔충이", "weedle");
-        KOREAN_TO_ENGLISH.put("딱충이", "kakuna");
-        KOREAN_TO_ENGLISH.put("독침봉", "beedrill");
-        KOREAN_TO_ENGLISH.put("구구", "pidgey");
-        KOREAN_TO_ENGLISH.put("피죤", "pidgeotto");
-        KOREAN_TO_ENGLISH.put("피죤투", "pidgeot");
-        KOREAN_TO_ENGLISH.put("꼬렛", "rattata");
-        KOREAN_TO_ENGLISH.put("레트라", "raticate");
-        KOREAN_TO_ENGLISH.put("깨비참", "spearow");
-        KOREAN_TO_ENGLISH.put("깨비드릴조", "fearow");
-        KOREAN_TO_ENGLISH.put("아보", "ekans");
-        KOREAN_TO_ENGLISH.put("아보크", "arbok");
-        KOREAN_TO_ENGLISH.put("야돈", "slowpoke");
-        KOREAN_TO_ENGLISH.put("야도란", "slowbro");
-        KOREAN_TO_ENGLISH.put("마임맨", "mr-mime");
-        KOREAN_TO_ENGLISH.put("망나뇽", "dragonite");
-        KOREAN_TO_ENGLISH.put("뮤", "mew");
-        KOREAN_TO_ENGLISH.put("뮤츠", "mewtwo");
-        KOREAN_TO_ENGLISH.put("잠만보", "snorlax");
-        KOREAN_TO_ENGLISH.put("롱스톤", "onix");
-    }
+    private static final String POKEAPI_SPECIES_URL = "https://pokeapi.co/api/v2/pokemon-species/";
 
     @Autowired
-    public PokemonService() {
-        this.restTemplate = new RestTemplate();
+    public PokemonService(RestTemplate restTemplate, PokemonNameRepository pokemonNameRepository) {
+        this.restTemplate = restTemplate;
+        this.pokemonNameRepository = pokemonNameRepository;
     }
 
     public PokemonDto searchPokemon(String query) {
         try {
-            // 한글 입력인 경우 영어로 변환
-            String searchTerm = convertToEnglish(query);
+            // 1. 먼저 DB에서 한국어/영어 이름으로 검색
+            String searchTerm = findEnglishNameFromDB(query);
 
-            // 영어나 숫자가 아닌 경우 소문자로 변환
-            searchTerm = searchTerm.toLowerCase().trim();
+            // 2. DB에 없으면 직접 검색 (영어나 숫자)
+            if (searchTerm == null) {
+                searchTerm = query.toLowerCase().trim();
+            }
 
+            // 3. Pokemon API 호출
             String url = POKEAPI_BASE_URL + searchTerm;
             PokemonDto pokemon = restTemplate.getForObject(url, PokemonDto.class);
+
+            // 4. 성공했고 DB에 없는 포켓몬이면 species 정보를 가져와서 DB에 저장
+            if (pokemon != null && !pokemonNameRepository.existsByPokemonId(pokemon.getId())) {
+                savePokemonNameFromSpecies(pokemon.getId());
+            }
 
             return pokemon;
 
@@ -82,14 +57,74 @@ public class PokemonService {
         }
     }
 
-    private String convertToEnglish(String koreanName) {
-        // 한국어 매핑에서 찾기
-        if (KOREAN_TO_ENGLISH.containsKey(koreanName)) {
-            return KOREAN_TO_ENGLISH.get(koreanName);
+    // DB에서 영어 이름 찾기
+    private String findEnglishNameFromDB(String query) {
+        // 한국어나 영어 이름으로 검색
+        Optional<PokemonName> pokemonName = pokemonNameRepository.findByAnyName(query);
+
+        if (pokemonName.isPresent()) {
+            return pokemonName.get().getEnglishName();
         }
 
-        // 매핑에 없으면 원래 값 반환 (영어나 숫자일 수 있음)
-        return koreanName;
+        // 숫자로 검색하는 경우 ID로 찾기
+        try {
+            int pokemonId = Integer.parseInt(query);
+            Optional<PokemonName> pokemonById = pokemonNameRepository.findByPokemonId(pokemonId);
+            if (pokemonById.isPresent()) {
+                return pokemonById.get().getEnglishName();
+            }
+        } catch (NumberFormatException ignored) {
+            // 숫자가 아닌 경우 무시
+        }
+
+        return null;
+    }
+
+    // Pokemon Species API에서 다국어 이름 가져와서 DB에 저장
+    private void savePokemonNameFromSpecies(int pokemonId) {
+        try {
+            String speciesUrl = POKEAPI_SPECIES_URL + pokemonId;
+            PokemonSpeciesDto species = restTemplate.getForObject(speciesUrl, PokemonSpeciesDto.class);
+
+            if (species != null) {
+                String englishName = species.getName();
+                String koreanName = species.getKoreanName();
+
+                // 한국어 이름이 있으면 저장
+                if (koreanName != null && !koreanName.equals(englishName)) {
+                    PokemonName pokemonName = new PokemonName(pokemonId, englishName, koreanName, "ko");
+                    pokemonNameRepository.save(pokemonName);
+                }
+            }
+        } catch (Exception e) {
+            // Species 정보 가져오기 실패해도 메인 검색에는 영향 없음
+            System.err.println("Species 정보 저장 실패 (Pokemon ID: " + pokemonId + "): " + e.getMessage());
+        }
+    }
+
+    // 초기 데이터 로딩 (애플리케이션 시작 시 실행)
+    public void loadInitialPokemonNames(int maxPokemon) {
+        System.out.println("포켓몬 이름 데이터 로딩 시작...");
+
+        for (int i = 1; i <= maxPokemon; i++) {
+            if (!pokemonNameRepository.existsByPokemonId(i)) {
+                try {
+                    savePokemonNameFromSpecies(i);
+                    // API 호출 제한을 위한 딜레이
+                    Thread.sleep(100);
+                } catch (Exception e) {
+                    System.err.println("Pokemon ID " + i + " 로딩 실패: " + e.getMessage());
+                }
+            }
+        }
+
+        System.out.println("포켓몬 이름 데이터 로딩 완료!");
+    }
+
+    // 특정 포켓몬의 한국어 이름 가져오기
+    public String getKoreanName(int pokemonId) {
+        Optional<PokemonName> pokemonName = pokemonNameRepository.findByPokemonId(pokemonId);
+        return pokemonName.map(PokemonName::getKoreanName).orElse(null);
     }
 
     // 타입 한국어 변환
