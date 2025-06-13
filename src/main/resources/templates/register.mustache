@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>포켓몬 도감 - 회원가입</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <img src="/image/pokemon_logo.png" alt="포켓몬 로고" class="logo">
+        <h1>포켓몬 도감 회원가입</h1>
+    </div>
+
+    <div class="register-form">
+        {{#errorMessage}}
+            <div class="error-message">{{errorMessage}}</div>
+        {{/errorMessage}}
+
+        <form action="/users/register" method="post">
+            <div class="form-group">
+                <label for="userId">아이디</label>
+                <div class="input-group">
+                    <input type="text" id="userId" name="userId" value="{{#user}}{{userId}}{{/user}}"
+                           placeholder="영문, 숫자 조합 4-20자" required>
+                    <button type="button" id="checkIdBtn" class="check-btn">중복확인</button>
+                </div>
+                <div id="idCheckMessage" class="check-message"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="userPw">비밀번호</label>
+                <input type="password" id="userPw" name="userPw"
+                       placeholder="8자리 이상 입력해주세요" required>
+            </div>
+
+            <div class="form-group">
+                <label for="userPwConfirm">비밀번호 확인</label>
+                <input type="password" id="userPwConfirm" name="userPwConfirm"
+                       placeholder="비밀번호를 다시 입력해주세요" required>
+                <div id="pwCheckMessage" class="check-message"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="userName">이름</label>
+                <input type="text" id="userName" name="userName" value="{{#user}}{{userName}}{{/user}}"
+                       placeholder="실명을 입력해주세요" required>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" id="submitBtn" class="submit-btn" disabled>회원가입</button>
+                <button type="button" class="cancel-btn" onclick="history.back()">취소</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="footer">
+        <p>이미 계정이 있으신가요? <a href="/users/login">로그인하기</a></p>
+    </div>
+</div>
+
+<script>
+    // ID 중복 확인
+    document.getElementById('checkIdBtn').addEventListener('click', function() {
+        const userId = document.getElementById('userId').value;
+        const messageDiv = document.getElementById('idCheckMessage');
+
+        if (!userId) {
+            messageDiv.textContent = '아이디를 입력해주세요.';
+            messageDiv.className = 'check-message error';
+            return;
+        }
+
+        fetch(`/users/check-id?userId=${userId}`)
+                .then(response => response.json())
+                .then(exists => {
+                    if (exists) {
+                        messageDiv.textContent = '이미 사용중인 아이디입니다.';
+                        messageDiv.className = 'check-message error';
+                    } else {
+                        messageDiv.textContent = '사용 가능한 아이디입니다.';
+                        messageDiv.className = 'check-message success';
+                    }
+                    checkFormValid();
+                })
+                .catch(error => {
+                    messageDiv.textContent = '확인 중 오류가 발생했습니다.';
+                    messageDiv.className = 'check-message error';
+                });
+    });
+
+    // 비밀번호 확인
+    document.getElementById('userPwConfirm').addEventListener('keyup', function() {
+        const pw = document.getElementById('userPw').value;
+        const pwConfirm = this.value;
+        const messageDiv = document.getElementById('pwCheckMessage');
+
+        if (pw !== pwConfirm) {
+            messageDiv.textContent = '비밀번호가 일치하지 않습니다.';
+            messageDiv.className = 'check-message error';
+        } else if (pw && pwConfirm) {
+            messageDiv.textContent = '비밀번호가 일치합니다.';
+            messageDiv.className = 'check-message success';
+        } else {
+            messageDiv.textContent = '';
+        }
+        checkFormValid();
+    });
+
+    // 폼 유효성 검사
+    function checkFormValid() {
+        const idSuccess = document.querySelector('#idCheckMessage.success');
+        const pwSuccess = document.querySelector('#pwCheckMessage.success');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (idSuccess && pwSuccess) {
+            submitBtn.disabled = false;
+        } else {
+            submitBtn.disabled = true;
+        }
+    }
+</script>
+</body>
+</html>
