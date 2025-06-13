@@ -46,9 +46,12 @@ public class PokemonService {
                 savePokemonNameFromSpecies(pokemon.getId());
             }
 
-            // [추가] 5. pokemonDto에 한글 이름 세팅
+            // 5. pokemonDto에 한글 이름 세팅
             Optional<PokemonName> nameEntity = pokemonNameRepository.findByPokemonId(pokemon.getId());
             nameEntity.ifPresent(name -> pokemon.setKoreanName(name.getKoreanName()));
+
+            // 6. 타입과 스탯 이름을 한국어로 변환
+            convertToKorean(pokemon);
 
             return pokemon;
 
@@ -58,6 +61,31 @@ public class PokemonService {
         } catch (Exception e) {
             // 기타 오류
             throw new RuntimeException("포켓몬 검색 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+    // 타입과 스탯을 한국어로 변환하는 메소드 추가
+    private void convertToKorean(PokemonDto pokemon) {
+        if (pokemon == null) return;
+
+        // 타입 이름 변환
+        if (pokemon.getTypes() != null) {
+            for (PokemonDto.TypeDto typeDto : pokemon.getTypes()) {
+                if (typeDto.getType() != null) {
+                    String koreanTypeName = getKoreanTypeName(typeDto.getType().getName());
+                    typeDto.getType().setKoreanName(koreanTypeName);
+                }
+            }
+        }
+
+        // 스탯 이름 변환
+        if (pokemon.getStats() != null) {
+            for (PokemonDto.StatDto statDto : pokemon.getStats()) {
+                if (statDto.getStat() != null) {
+                    String koreanStatName = getKoreanStatName(statDto.getStat().getName());
+                    statDto.getStat().setKoreanName(koreanStatName);
+                }
+            }
         }
     }
 

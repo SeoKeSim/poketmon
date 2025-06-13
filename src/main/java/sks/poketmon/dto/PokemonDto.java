@@ -110,6 +110,7 @@ public class PokemonDto {
         public static class TypeInfoDto {
             private String name;
             private String url;
+            private String koreanName; // 추가된 필드
 
             public String getName() {
                 return name;
@@ -125,6 +126,14 @@ public class PokemonDto {
 
             public void setUrl(String url) {
                 this.url = url;
+            }
+
+            public String getKoreanName() {
+                return koreanName;
+            }
+
+            public void setKoreanName(String koreanName) {
+                this.koreanName = koreanName;
             }
         }
     }
@@ -164,6 +173,7 @@ public class PokemonDto {
         public static class StatInfoDto {
             private String name;
             private String url;
+            private String koreanName; // 추가된 필드
 
             public String getName() {
                 return name;
@@ -180,6 +190,14 @@ public class PokemonDto {
             public void setUrl(String url) {
                 this.url = url;
             }
+
+            public String getKoreanName() {
+                return koreanName;
+            }
+
+            public void setKoreanName(String koreanName) {
+                this.koreanName = koreanName;
+            }
         }
     }
 
@@ -189,6 +207,7 @@ public class PokemonDto {
         private String frontDefault;
         @JsonProperty("front_shiny")
         private String frontShiny;
+        private OtherDto other;
 
         public String getFrontDefault() {
             return frontDefault;
@@ -204,6 +223,42 @@ public class PokemonDto {
 
         public void setFrontShiny(String frontShiny) {
             this.frontShiny = frontShiny;
+        }
+
+        public OtherDto getOther() {
+            return other;
+        }
+
+        public void setOther(OtherDto other) {
+            this.other = other;
+        }
+
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public static class OtherDto {
+            @JsonProperty("official-artwork")
+            private OfficialArtworkDto officialArtwork;
+
+            public OfficialArtworkDto getOfficialArtwork() {
+                return officialArtwork;
+            }
+
+            public void setOfficialArtwork(OfficialArtworkDto officialArtwork) {
+                this.officialArtwork = officialArtwork;
+            }
+
+            @JsonIgnoreProperties(ignoreUnknown = true)
+            public static class OfficialArtworkDto {
+                @JsonProperty("front_default")
+                private String frontDefault;
+
+                public String getFrontDefault() {
+                    return frontDefault;
+                }
+
+                public void setFrontDefault(String frontDefault) {
+                    this.frontDefault = frontDefault;
+                }
+            }
         }
     }
 }
