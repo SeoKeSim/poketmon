@@ -1,6 +1,7 @@
 package sks.poketmon.dto;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class FavoriteResponseDto {
 
@@ -74,4 +75,9 @@ public class FavoriteResponseDto {
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
+//    public String getFormattedDate() {
+//        if (createdAt == null) return "";
+//        return createdAt.format(DateTimeFormatter.ofPattern("MM월 dd일"));
+//    }
 }

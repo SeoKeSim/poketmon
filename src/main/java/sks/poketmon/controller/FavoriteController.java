@@ -7,7 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import sks.poketmon.dto.FavoriteResponseDto;
-import sks.poketmon.entity.User;
+import sks.poketmon.dto.user.LoginResponseDto;
 import sks.poketmon.service.FavoriteService;
 
 import java.time.format.DateTimeFormatter;
@@ -22,37 +22,31 @@ public class FavoriteController {
 
     @GetMapping
     public String favoritesPage(Model model, HttpSession session) {
-        // 로그인 사용자 확인
-        User loginUser = (User) session.getAttribute("loginUser");
-        if (loginUser == null) {
-            // 로그인 페이지로 리다이렉트
+        // 로그인 사용자 확인 - LoginResponseDto로 변경
+        LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
+        if (loginUser == null || !loginUser.isSuccess()) {
             return "redirect:/users/login";
         }
 
         try {
-            // 즐겨찾기 목록 조회
+            // 즐겨찾기 목록 조회 - userCode 사용
             List<FavoriteResponseDto> favorites = favoriteService.getFavoriteList(loginUser.getUserCode());
 
-            // 날짜 포맷 처리
+            // 날짜 포맷 헬퍼 전달
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM월 dd일");
-            favorites.forEach(favorite -> {
-                if (favorite.getCreatedAt() != null) {
-                    // 날짜 포맷팅을 위한 헬퍼 메서드 (Mustache에서 사용)
-                    model.addAttribute("formatDate", formatter);
-                }
-            });
+            model.addAttribute("formatDate", formatter);
 
-            // 즐겨찾기 개수 조회
-            long favoriteCount = favoriteService.getFavoriteCount(loginUser.getUserCode());
+            // 즐겨찾기 개수
+            long favoriteCount = (favorites != null) ? favorites.size() : 0;
 
-            // 모델에 데이터 추가
-            model.addAttribute("favorites", favorites);
+            // 모델에 추가
+            model.addAttribute("favorites", favorites != null ? favorites : List.of());
             model.addAttribute("favoriteCount", favoriteCount);
-            model.addAttribute("hasFavorites", !favorites.isEmpty());
-            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("hasFavorites", favorites != null && !favorites.isEmpty());
+            model.addAttribute("loginUser", loginUser); // LoginResponseDto 객체 전달
 
         } catch (Exception e) {
-            // 오류 발생 시 빈 목록으로 처리
+            // 예외 시에도 빈 값들로 초기화해서 템플릿이 안 깨지도록
             model.addAttribute("favorites", List.of());
             model.addAttribute("favoriteCount", 0);
             model.addAttribute("hasFavorites", false);

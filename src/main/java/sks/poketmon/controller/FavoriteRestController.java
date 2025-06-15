@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import sks.poketmon.dto.ApiResponse;
 import sks.poketmon.dto.FavoriteRequestDto;
 import sks.poketmon.dto.FavoriteResponseDto;
-import sks.poketmon.entity.User;
+import sks.poketmon.dto.user.LoginResponseDto;
 import sks.poketmon.exception.FavoriteException;
 import sks.poketmon.service.FavoriteService;
 
@@ -29,7 +29,7 @@ public class FavoriteRestController {
 
         try {
             // 로그인 사용자 확인
-            User loginUser = (User) session.getAttribute("loginUser");
+            LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
             if (loginUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("로그인이 필요한 서비스입니다."));
@@ -64,7 +64,7 @@ public class FavoriteRestController {
 
         try {
             // 로그인 사용자 확인
-            User loginUser = (User) session.getAttribute("loginUser");
+            LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
             if (loginUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("로그인이 필요한 서비스입니다."));
@@ -91,7 +91,7 @@ public class FavoriteRestController {
 
         try {
             // 로그인 사용자 확인
-            User loginUser = (User) session.getAttribute("loginUser");
+            LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
             if (loginUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("로그인이 필요한 서비스입니다."));
@@ -116,7 +116,7 @@ public class FavoriteRestController {
 
         try {
             // 로그인 사용자 확인
-            User loginUser = (User) session.getAttribute("loginUser");
+            LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
             if (loginUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("로그인이 필요한 서비스입니다."));
@@ -140,7 +140,7 @@ public class FavoriteRestController {
 
         try {
             // 로그인 사용자 확인
-            User loginUser = (User) session.getAttribute("loginUser");
+            LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
             if (loginUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(ApiResponse.error("로그인이 필요한 서비스입니다."));
