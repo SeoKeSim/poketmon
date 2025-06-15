@@ -1,0 +1,32 @@
+<head>
+    <link rel="stylesheet" href="/css/header.css">
+</head>
+<header class="header">
+    <div class="header-container">
+        <div class="header-left">
+            <a href="/" class="logo-link">
+                <img src="/image/pokemon_logo.png" alt="포켓몬 로고" class="header-logo">
+            </a>
+        </div>
+
+        <nav class="header-nav">
+            {{#loginUser}}
+                <!-- 로그인된 상태 -->
+                <div class="user-info">
+                    <span class="welcome-text">{{userName}}님 환영합니다!</span>
+                    <form action="/users/logout" method="post" class="logout-form">
+                        <button type="submit" class="logout-btn">로그아웃</button>
+                    </form>
+                </div>
+            {{/loginUser}}
+
+            {{^loginUser}}
+                <!-- 로그인되지 않은 상태 -->
+                <div class="auth-buttons">
+                    <a href="/users/login" class="auth-btn login-btn">로그인</a>
+                    <a href="/users/register" class="auth-btn register-btn">회원가입</a>
+                </div>
+            {{/loginUser}}
+        </nav>
+    </div>
+</header>

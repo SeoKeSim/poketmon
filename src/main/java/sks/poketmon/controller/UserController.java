@@ -5,9 +5,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import sks.poketmon.dto.user.LoginRequestDto;
+import sks.poketmon.dto.user.LoginResponseDto;
 import sks.poketmon.dto.user.RegisterRequestDto;
 import sks.poketmon.dto.user.RegisterResponseDto;
 import sks.poketmon.service.UserService;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 @RequestMapping("/users")
@@ -61,6 +65,61 @@ public class UserController {
     @GetMapping("/register-success")
     public String showRegisterSuccess() {
         return "register-success";
+    }
+
+    /**
+     * 로그인 폼 페이지
+     * GET /users/login
+     */
+    @GetMapping("/login")
+    public String showLoginForm(Model model, HttpSession session) {
+        // 이미 로그인된 경우 메인 페이지로 리다이렉트
+        if (session.getAttribute("loginUser") != null) {
+            return "redirect:/";
+        }
+
+        LoginRequestDto loginRequest = new LoginRequestDto();
+        loginRequest.setUserId("");
+        model.addAttribute("loginRequest", loginRequest);
+        return "login";
+    }
+
+    /**
+     * 로그인 처리
+     * POST /users/login
+     */
+    @PostMapping("/login")
+    public String loginUser(@ModelAttribute LoginRequestDto request,
+                            HttpSession session,
+                            RedirectAttributes redirectAttributes,
+                            Model model) {
+
+        LoginResponseDto response = userService.loginUser(request);
+
+        if (response.isSuccess()) {
+            // 로그인 성공 - 세션에 사용자 정보 저장
+            session.setAttribute("loginUser", response);
+            redirectAttributes.addFlashAttribute("successMessage",
+                    response.getUserName() + "님, 환영합니다!");
+            return "redirect:/";
+        } else {
+            // 로그인 실패
+            model.addAttribute("errorMessage", response.getMessage());
+            model.addAttribute("loginRequest", request);
+            return "login";
+        }
+    }
+
+    /**
+     * 로그아웃 처리
+     * POST /users/logout
+     */
+    @PostMapping("/logout")
+    public String logout(HttpSession session, RedirectAttributes redirectAttributes) {
+        session.removeAttribute("loginUser");
+        session.invalidate();
+        redirectAttributes.addFlashAttribute("successMessage", "로그아웃되었습니다.");
+        return "redirect:/";
     }
 
     /**

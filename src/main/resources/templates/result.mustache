@@ -7,11 +7,25 @@
     <link rel="stylesheet" href="/css/result.css">
 </head>
 <body>
+<a href="/" class="logo_h">
+    <img src="/image/pokemon_logo.png" alt="포켓몬 로고" class="pokemon-logo">
+</a>
 <div class="result-container type-{{pokemon.types.0.type.name}}">
     <div class="header">
         <div class="pokemon-id">#{{pokemon.id}}</div>
         <div class="pokemon-name">{{pokemon.koreanName}}</div>
         <div class="pokemon-name-english">({{pokemon.name}})</div>
+    </div>
+
+    <div class="search-section">
+        <form class="search-form" action="/search" method="post">
+            <input type="text"
+                   name="query"
+                   class="search-input"
+                   placeholder="다른 포켓몬 검색하기"
+                   required>
+            <button type="submit" class="search-btn">검색</button>
+        </form>
     </div>
 
     <div class="content">

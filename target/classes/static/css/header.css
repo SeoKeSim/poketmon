@@ -1,0 +1,113 @@
+.header {
+    background-color: #fff;
+    border-bottom: 2px solid #e3f2fd;
+    padding: 10px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.header-left .logo-link {
+    text-decoration: none;
+}
+
+.header-logo {
+    height: 40px;
+    width: auto;
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: #1976d2;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.logout-form {
+    margin: 0;
+}
+
+.logout-btn {
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #d32f2f;
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.auth-btn {
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+}
+
+.login-btn {
+    color: #1976d2;
+    border-color: #1976d2;
+}
+
+.login-btn:hover {
+    background-color: #1976d2;
+    color: white;
+}
+
+.register-btn {
+    background-color: #4caf50;
+    color: white;
+}
+
+.register-btn:hover {
+    background-color: #45a049;
+}
+
+@media (max-width: 768px) {
+    .header-container {
+        padding: 0 15px;
+    }
+
+    .welcome-text {
+        display: none;
+    }
+
+    .auth-buttons {
+        gap: 8px;
+    }
+
+    .auth-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+}

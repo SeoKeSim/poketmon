@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - 포켓몬 검색</title>
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+<!-- 헤더 포함 -->
+{{>header}}
+
+<div class="auth-container">
+    <div class="auth-form-wrapper">
+        <div class="auth-header">
+            <img src="/image/pokemon_logo.png" alt="포켓몬 로고" class="auth-logo">
+            <h2>로그인</h2>
+        </div>
+
+        {{#errorMessage}}
+            <div class="error-message">
+                {{errorMessage}}
+            </div>
+        {{/errorMessage}}
+
+        <form action="/users/login" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="userId">사용자 ID</label>
+                <input type="text"
+                       id="userId"
+                       name="userId"
+                       value="{{loginRequest.userId}}"
+                       placeholder="사용자 ID를 입력하세요"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label for="userPw">비밀번호</label>
+                <input type="password"
+                       id="userPw"
+                       name="userPw"
+                       placeholder="비밀번호를 입력하세요"
+                       required>
+            </div>
+
+            <button type="submit" class="auth-btn-primary">로그인</button>
+        </form>
+
+        <div class="auth-links">
+            <p>계정이 없으신가요? <a href="/users/register">회원가입</a></p>
+            <p><a href="/">메인 페이지로 돌아가기</a></p>
+        </div>
+    </div>
+</div>

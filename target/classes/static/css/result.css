@@ -4,6 +4,15 @@ body {
     min-height: 100vh;
     padding: 2rem;
 }
+.pokemon-logo {
+    width: 300px;
+    margin-bottom: 1.5rem;
+}
+
+.logo_h{
+    display: grid;
+    place-items: center;
+}
 
 .result-container {
     max-width: 800px;
@@ -13,6 +22,49 @@ body {
     overflow: hidden;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
+}
+.search-section{
+    display: grid;
+    place-items: center;
+}
+.search-form {
+    display: flex;        /* 추가 */
+    gap: 10px;           /* 추가 - 검색바와 버튼 사이 간격 */
+    align-items: center; /* 추가 - 수직 정렬 */
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    width: 100%;
+    max-width: 400px;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    transition: border-color 0.3s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+}
+
+.search-btn {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    flex-shrink: 0;      /* 추가 - 버튼 크기 유지 */
+    min-width: 80px;
+}
+
+.search-btn:hover {
+    background: #45a049;
 }
 
 /* 기본 헤더 스타일 (타입 색상으로 덮어씀) */
