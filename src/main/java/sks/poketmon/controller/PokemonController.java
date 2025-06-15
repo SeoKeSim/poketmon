@@ -1,5 +1,6 @@
 package sks.poketmon.controller;
 
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import sks.poketmon.dto.PokemonDto;
+import sks.poketmon.dto.user.LoginResponseDto;
 import sks.poketmon.service.PokemonService;
 
 @Controller
@@ -17,13 +19,25 @@ public class PokemonController {
 
     // 메인 페이지 (검색 폼)
     @GetMapping("/")
-    public String index() {
+    public String index(HttpSession session, Model model) {
+        // 세션에서 로그인 정보 가져와서 모델에 추가
+        LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
+        if (loginUser != null) {
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("userName", loginUser.getUserName());
+        }
         return "index";
     }
 
     // 포켓몬 검색 처리
     @PostMapping("/search")
-    public String searchPokemon(@RequestParam("query") String query, Model model) {
+    public String searchPokemon(@RequestParam("query") String query, Model model, HttpSession session) {
+
+        LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
+        if (loginUser != null) {
+            model.addAttribute("loginUser", loginUser);
+            model.addAttribute("userName", loginUser.getUserName());
+        }
 
         if (query == null || query.trim().isEmpty()) {
             model.addAttribute("error", "검색어를 입력해주세요.");
