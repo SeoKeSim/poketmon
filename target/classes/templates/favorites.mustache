@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 즐겨찾기 - 포켓몬 도감</title>
+    <link rel="stylesheet" href="/css/favorites.css">
+</head>
+<body>
+{{>header}}
+
+<div class="favorites-container">
+    <div class="favorites-header">
+        <h1 class="page-title">⭐ 내 즐겨찾기</h1>
+        <p class="favorites-count">총 <span id="favoriteCount">{{favoriteCount}}</span>마리의 포켓몬</p>
+    </div>
+
+    {{#hasFavorites}}
+        <div class="favorites-grid" id="favoritesGrid">
+            {{#favorites}}
+                <div class="pokemon-card" data-pokemon-id="{{pokemonId}}">
+                    <div class="pokemon-image-container">
+                        <img src="{{pokemonImageUrl}}" alt="{{pokemonKoreanName}}" class="pokemon-image">
+                        <button class="remove-favorite-btn" data-pokemon-id="{{pokemonId}}" title="즐겨찾기 해제">
+                            ❤️
+                        </button>
+                    </div>
+
+                    <div class="pokemon-info">
+                        <div class="pokemon-number">#{{pokemonId}}</div>
+                        <div class="pokemon-name-ko">{{pokemonKoreanName}}</div>
+                        <div class="pokemon-name-en">{{pokemonName}}</div>
+                        <div class="added-date">{{#formatDate}}{{createdAt}}{{/formatDate}} 추가</div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="view-detail-btn" data-pokemon-name="{{pokemonName}}">
+                            상세보기
+                        </button>
+                    </div>
+                </div>
+            {{/favorites}}
+        </div>
+    {{/hasFavorites}}
+
+    {{^hasFavorites}}
+        <div class="empty-favorites">
+            <div class="empty-icon">💔</div>
+            <h2>아직 즐겨찾기한 포켓몬이 없어요</h2>
+            <p>포켓몬을 검색하고 마음에 드는 포켓몬을 즐겨찾기에 추가해보세요!</p>
+            <a href="/" class="search-btn">포켓몬 검색하기</a>
+        </div>
+    {{/hasFavorites}}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 즐겨찾기 해제 버튼 이벤트
+        document.querySelectorAll('.remove-favorite-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const pokemonId = this.dataset.pokemonId;
+                removeFavorite(pokemonId);
+            });
+        });
+
+        // 상세보기 버튼 이벤트
+        document.querySelectorAll('.view-detail-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const pokemonName = this.dataset.pokemonName;
+                searchPokemon(pokemonName);
+            });
+        });
+
+        // 포켓몬 카드 클릭 이벤트 (상세보기와 동일)
+        document.querySelectorAll('.pokemon-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // 버튼 클릭 시에는 카드 클릭 이벤트 무시
+                if (e.target.classList.contains('remove-favorite-btn') ||
+                        e.target.classList.contains('view-detail-btn')) {
+                    return;
+                }
+
+                const pokemonId = this.dataset.pokemonId;
+                const pokemonName = this.querySelector('.pokemon-name-en').textContent;
+                searchPokemon(pokemonName);
+            });
+        });
+    });
+
+    // 즐겨찾기 해제 함수
+    async function removeFavorite(pokemonId) {
+        if (!confirm('정말로 즐겨찾기에서 삭제하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/favorites/${pokemonId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // 카드 제거 애니메이션
+                const card = document.querySelector(`[data-pokemon-id="${pokemonId}"]`);
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.8)';
+
+                setTimeout(() => {
+                    card.remove();
+                    updateFavoriteCount();
+                    checkEmptyState();
+                }, 300);
+
+                showMessage('즐겨찾기에서 삭제되었습니다.', 'success');
+            } else {
+                showMessage(result.message || '삭제 중 오류가 발생했습니다.', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('네트워크 오류가 발생했습니다.', 'error');
+        }
+    }
+
+    // 포켓몬 검색 (상세보기)
+    function searchPokemon(pokemonName) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/search';
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'query';
+        input.value = pokemonName;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    // 즐겨찾기 개수 업데이트
+    function updateFavoriteCount() {
+        const remainingCards = document.querySelectorAll('.pokemon-card').length;
+        document.getElementById('favoriteCount').textContent = remainingCards;
+    }
+
+    // 빈 상태 체크
+    function checkEmptyState() {
+        const remainingCards = document.querySelectorAll('.pokemon-card').length;
+        if (remainingCards === 0) {
+            const container = document.querySelector('.favorites-container');
+            container.innerHTML = `
+            {{>header}}
+            <div class="favorites-container">
+                <div class="favorites-header">
+                    <h1 class="page-title">⭐ 내 즐겨찾기</h1>
+                    <p class="favorites-count">총 <span id="favoriteCount">0</span>마리의 포켓몬</p>
+                </div>
+                <div class="empty-favorites">
+                    <div class="empty-icon">💔</div>
+                    <h2>즐겨찾기가 모두 삭제되었어요</h2>
+                    <p>새로운 포켓몬을 검색하고 즐겨찾기에 추가해보세요!</p>
+                    <a href="/" class="search-btn">포켓몬 검색하기</a>
+                </div>
+            </div>
+        `;
+        }
+    }
+
+    // 메시지 표시 함수
+    function showMessage(message, type = 'info') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message message-${type}`;
+        messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+        background-color: ${type === 'success' ? '#28a745' : '#dc3545'};
+    `;
+
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            messageDiv.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => messageDiv.remove(), 300);
+        }, 3000);
+    }
+
+    // 애니메이션 스타일 추가
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+    document.head.appendChild(style);
+</script>
+
+</body>
+</html>
