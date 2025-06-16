@@ -23,7 +23,9 @@
             </div>
         {{/errorMessage}}
 
-        <form action="/users/login" method="post" class="auth-form">
+        <div id="jwtResult" class="jwt-result" style="display:none;"></div>
+
+        <form id="loginForm" class="auth-form">
             <div class="form-group">
                 <label for="userId">사용자 ID</label>
                 <input type="text"
@@ -43,7 +45,10 @@
                        required>
             </div>
 
-            <button type="submit" class="auth-btn-primary">로그인</button>
+            <div class="auth-buttons">
+                <button type="button" id="sessionLoginBtn" class="auth-btn-primary">세션 로그인</button>
+                <button type="button" id="jwtLoginBtn" class="auth-btn-secondary">JWT 로그인</button>
+            </div>
         </form>
 
         <div class="auth-links">
@@ -52,3 +57,98 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loginForm = document.getElementById('loginForm');
+        const sessionLoginBtn = document.getElementById('sessionLoginBtn');
+        const jwtLoginBtn = document.getElementById('jwtLoginBtn');
+        const jwtResult = document.getElementById('jwtResult');
+
+        // 세션 로그인 (기존 방식)
+        sessionLoginBtn.addEventListener('click', function() {
+            const formData = new FormData();
+            formData.append('userId', document.getElementById('userId').value);
+            formData.append('userPw', document.getElementById('userPw').value);
+
+            // 기존 POST 방식으로 세션 로그인
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/users/login';
+
+            const userIdInput = document.createElement('input');
+            userIdInput.type = 'hidden';
+            userIdInput.name = 'userId';
+            userIdInput.value = document.getElementById('userId').value;
+
+            const userPwInput = document.createElement('input');
+            userPwInput.type = 'hidden';
+            userPwInput.name = 'userPw';
+            userPwInput.value = document.getElementById('userPw').value;
+
+            form.appendChild(userIdInput);
+            form.appendChild(userPwInput);
+            document.body.appendChild(form);
+            form.submit();
+        });
+
+        // JWT 로그인 (새로운 방식)
+        jwtLoginBtn.addEventListener('click', function() {
+            const userId = document.getElementById('userId').value;
+            const userPw = document.getElementById('userPw').value;
+
+            if (!userId || !userPw) {
+                showJwtResult('사용자 ID와 비밀번호를 입력해주세요.', 'error');
+                return;
+            }
+
+            // JWT API 호출
+            fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    userPw: userPw
+                })
+            })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // JWT 토큰을 localStorage에 저장
+                            localStorage.setItem('jwt-token', data.token);
+                            localStorage.setItem('user-info', JSON.stringify({
+                                userCode: data.userCode,
+                                userId: data.userId,
+                                userName: data.userName
+                            }));
+
+                            showJwtResult(`JWT 로그인 성공! ${data.userName}님 환영합니다.`, 'success');
+
+                            // 3초 후 메인 페이지로 이동
+                            setTimeout(() => {
+                                window.location.href = '/';
+                            }, 3000);
+                        } else {
+                            showJwtResult(data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showJwtResult('로그인 중 오류가 발생했습니다.', 'error');
+                    });
+        });
+
+        function showJwtResult(message, type) {
+            jwtResult.textContent = message;
+            jwtResult.className = `jwt-result ${type}`;
+            jwtResult.style.display = 'block';
+
+            // 5초 후 메시지 숨기기
+            setTimeout(() => {
+                jwtResult.style.display = 'none';
+            }, 5000);
+        }
+    });
+</script>
