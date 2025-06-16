@@ -1,6 +1,8 @@
 package sks.poketmon.controller;
 
 import jakarta.servlet.http.HttpSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +15,8 @@ import sks.poketmon.service.PokemonService;
 
 @Controller
 public class PokemonController {
+
+    private static final Logger logger = LoggerFactory.getLogger(PokemonController.class);
 
     @Autowired
     private PokemonService pokemonService;
@@ -33,6 +37,8 @@ public class PokemonController {
     @PostMapping("/search")
     public String searchPokemon(@RequestParam("query") String query, Model model, HttpSession session) {
 
+        logger.info("포켓몬 검색 요청: {}", query);
+
         LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
         if (loginUser != null) {
             model.addAttribute("loginUser", loginUser);
@@ -40,6 +46,7 @@ public class PokemonController {
         }
 
         if (query == null || query.trim().isEmpty()) {
+            logger.warn("빈 검색어로 요청됨");
             model.addAttribute("error", "검색어를 입력해주세요.");
             return "index";
         }
@@ -48,16 +55,23 @@ public class PokemonController {
             PokemonDto pokemon = pokemonService.searchPokemon(query);
 
             if (pokemon == null) {
+                logger.info("포켓몬을 찾을 수 없음: {}", query);
                 model.addAttribute("error", "'" + query + "'에 해당하는 포켓몬을 찾을 수 없습니다.");
                 return "index";
             }
 
+            logger.info("포켓몬 검색 성공: {} (ID: {})", pokemon.getName(), pokemon.getId());
             model.addAttribute("pokemon", pokemon);
             model.addAttribute("pokemonService", pokemonService); // 한국어 변환을 위해 추가
             return "result";
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            logger.error("포켓몬 검색 중 런타임 오류 발생", e);
             model.addAttribute("error", "검색 중 오류가 발생했습니다: " + e.getMessage());
+            return "index";
+        } catch (Exception e) {
+            logger.error("포켓몬 검색 중 예상치 못한 오류 발생", e);
+            model.addAttribute("error", "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
             return "index";
         }
     }

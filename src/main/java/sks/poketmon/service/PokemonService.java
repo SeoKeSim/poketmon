@@ -1,9 +1,14 @@
 package sks.poketmon.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import sks.poketmon.dto.PokemonDto;
 import sks.poketmon.dto.PokemonSpeciesDto;
 import sks.poketmon.entity.PokemonName;
@@ -14,6 +19,8 @@ import java.util.Optional;
 
 @Service
 public class PokemonService {
+
+    private static final Logger logger = LoggerFactory.getLogger(PokemonService.class);
 
     private final RestTemplate restTemplate;
     private final PokemonNameRepository pokemonNameRepository;
@@ -29,6 +36,8 @@ public class PokemonService {
 
     public PokemonDto searchPokemon(String query) {
         try {
+            logger.info("포켓몬 검색 시작: {}", query);
+
             // 1. 먼저 DB에서 한국어/영어 이름으로 검색
             String searchTerm = findEnglishNameFromDB(query);
 
@@ -37,29 +46,50 @@ public class PokemonService {
                 searchTerm = query.toLowerCase().trim();
             }
 
-            // 3. Pokemon API 호출
+            logger.debug("최종 검색어: {}", searchTerm);
+
+            // 3. Pokemon API 호출 - ResponseEntity 사용으로 더 안전하게
             String url = POKEAPI_BASE_URL + searchTerm;
-            PokemonDto pokemon = restTemplate.getForObject(url, PokemonDto.class);
+            logger.debug("API 호출 URL: {}", url);
+
+            ResponseEntity<PokemonDto> response;
+            try {
+                response = restTemplate.getForEntity(url, PokemonDto.class);
+            } catch (HttpClientErrorException.NotFound e) {
+                logger.warn("포켓몬을 찾을 수 없음: {}", searchTerm);
+                return null;
+            } catch (RestClientException e) {
+                logger.error("API 호출 중 오류 발생: {}", e.getMessage());
+                throw new RuntimeException("포켓몬 API 호출 중 오류가 발생했습니다: " + e.getMessage());
+            }
+
+            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                logger.warn("API 응답이 비정상적입니다. Status: {}", response.getStatusCode());
+                return null;
+            }
+
+            PokemonDto pokemon = response.getBody();
+            logger.info("포켓몬 데이터 조회 성공: {} (ID: {})", pokemon.getName(), pokemon.getId());
 
             // 4. 성공했고 DB에 없는 포켓몬이면 species 정보를 가져와서 DB에 저장
-            if (pokemon != null && !pokemonNameRepository.existsByPokemonId(pokemon.getId())) {
+            if (!pokemonNameRepository.existsByPokemonId(pokemon.getId())) {
                 savePokemonNameFromSpecies(pokemon.getId());
             }
 
             // 5. pokemonDto에 한글 이름 세팅
             Optional<PokemonName> nameEntity = pokemonNameRepository.findByPokemonId(pokemon.getId());
-            nameEntity.ifPresent(name -> pokemon.setKoreanName(name.getKoreanName()));
+            nameEntity.ifPresent(name -> {
+                pokemon.setKoreanName(name.getKoreanName());
+                logger.debug("한국어 이름 설정: {}", name.getKoreanName());
+            });
 
             // 6. 타입과 스탯 이름을 한국어로 변환
             convertToKorean(pokemon);
 
             return pokemon;
 
-        } catch (HttpClientErrorException.NotFound e) {
-            // 포켓몬을 찾을 수 없는 경우
-            return null;
         } catch (Exception e) {
-            // 기타 오류
+            logger.error("포켓몬 검색 중 예상치 못한 오류 발생", e);
             throw new RuntimeException("포켓몬 검색 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
@@ -116,9 +146,12 @@ public class PokemonService {
     private void savePokemonNameFromSpecies(int pokemonId) {
         try {
             String speciesUrl = POKEAPI_SPECIES_URL + pokemonId;
-            PokemonSpeciesDto species = restTemplate.getForObject(speciesUrl, PokemonSpeciesDto.class);
+            logger.debug("Species API 호출: {}", speciesUrl);
 
-            if (species != null) {
+            ResponseEntity<PokemonSpeciesDto> response = restTemplate.getForEntity(speciesUrl, PokemonSpeciesDto.class);
+
+            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                PokemonSpeciesDto species = response.getBody();
                 String englishName = species.getName();
                 String koreanName = species.getKoreanName();
 
@@ -126,17 +159,18 @@ public class PokemonService {
                 if (koreanName != null && !koreanName.equals(englishName)) {
                     PokemonName pokemonName = new PokemonName(pokemonId, englishName, koreanName, "ko");
                     pokemonNameRepository.save(pokemonName);
+                    logger.debug("포켓몬 이름 저장: {} -> {}", englishName, koreanName);
                 }
             }
         } catch (Exception e) {
             // Species 정보 가져오기 실패해도 메인 검색에는 영향 없음
-            System.err.println("Species 정보 저장 실패 (Pokemon ID: " + pokemonId + "): " + e.getMessage());
+            logger.warn("Species 정보 저장 실패 (Pokemon ID: {}): {}", pokemonId, e.getMessage());
         }
     }
 
     // 초기 데이터 로딩 (애플리케이션 시작 시 실행)
     public void loadInitialPokemonNames(int maxPokemon) {
-        System.out.println("포켓몬 이름 데이터 로딩 시작...");
+        logger.info("포켓몬 이름 데이터 로딩 시작...");
 
         for (int i = 1; i <= maxPokemon; i++) {
             if (!pokemonNameRepository.existsByPokemonId(i)) {
@@ -145,12 +179,12 @@ public class PokemonService {
                     // API 호출 제한을 위한 딜레이
                     Thread.sleep(100);
                 } catch (Exception e) {
-                    System.err.println("Pokemon ID " + i + " 로딩 실패: " + e.getMessage());
+                    logger.error("Pokemon ID {} 로딩 실패: {}", i, e.getMessage());
                 }
             }
         }
 
-        System.out.println("포켓몬 이름 데이터 로딩 완료!");
+        logger.info("포켓몬 이름 데이터 로딩 완료!");
     }
 
     // 특정 포켓몬의 한국어 이름 가져오기
