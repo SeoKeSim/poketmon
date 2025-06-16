@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="/css/login.css">
 </head>
 <body>
-<!-- 헤더 포함 -->
 {{>header}}
 
 <div class="auth-container">
@@ -23,6 +22,7 @@
             </div>
         {{/errorMessage}}
 
+        <!-- 기존 로그인 폼 -->
         <form action="/users/login" method="post" class="auth-form">
             <div class="form-group">
                 <label for="userId">사용자 ID</label>
@@ -43,7 +43,30 @@
                        required>
             </div>
 
-            <button type="submit" class="auth-btn-primary">로그인</button>
+            <button type="submit" class="auth-btn-primary">세션 로그인</button>
+        </form>
+
+        <!-- JWT 로그인 폼 -->
+        <form action="/api/auth/jwt-login" method="post" class="auth-form" style="margin-top: 20px;">
+            <div class="form-group">
+                <label for="jwtEmail">이메일 (JWT)</label>
+                <input type="text"
+                       id="jwtEmail"
+                       name="email"
+                       placeholder="이메일을 입력하세요"
+                       required>
+            </div>
+
+            <div class="form-group">
+                <label for="jwtPassword">비밀번호 (JWT)</label>
+                <input type="password"
+                       id="jwtPassword"
+                       name="password"
+                       placeholder="비밀번호를 입력하세요"
+                       required>
+            </div>
+
+            <button type="submit" class="auth-btn-secondary">JWT 로그인</button>
         </form>
 
         <div class="auth-links">
@@ -52,3 +75,5 @@
         </div>
     </div>
 </div>
+</body>
+</html>

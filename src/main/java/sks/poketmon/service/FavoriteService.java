@@ -23,6 +23,9 @@ public class FavoriteService {
     @Autowired
     private PokemonNameRepository pokemonNameRepository;
 
+    @Autowired
+    private UserFavoritePokemonRepository userFavoritePokemonRepository;
+
     // 즐겨찾기 추가
     public FavoriteResponseDto addFavorite(Long userCode, Integer pokemonId) {
         // 이미 즐겨찾기에 있는지 확인
@@ -48,6 +51,31 @@ public class FavoriteService {
         // 즐겨찾기 삭제
         favoritePokemonRepository.deleteByUserCodeAndPokemonId(userCode, pokemonId);
     }
+
+    // JWT 전용 메서드
+    public boolean addFavoriteJwt(Long userCode, Integer pokemonId) {
+        try {
+            addFavorite(userCode, pokemonId); // 기존 메서드 재활용
+            return true;
+        } catch (FavoriteException.AlreadyExistsException e) {
+            return false;
+        }
+    }
+
+    public boolean removeFavoriteJwt(Long userCode, Integer pokemonId) {
+        try {
+            removeFavorite(userCode, pokemonId); // 기존 메서드 재활용
+            return true;
+        } catch (FavoriteException.NotFoundException e) {
+            return false;
+        }
+    }
+
+    // 즐겨찾기 개수 조회 (jwt)
+    public List<Integer> getFavoriteIds(Long userCode) {
+        return userFavoritePokemonRepository.findPokemonIdsByUserCode(userCode);
+    }
+
 
     // 내 즐겨찾기 목록 조회
     @Transactional(readOnly = true)

@@ -29,4 +29,7 @@ public interface UserFavoritePokemonRepository extends JpaRepository<UserFavorit
 
     // 특정 포켓몬을 즐겨찾기한 사용자 수 조회
     long countByPokemonId(Integer pokemonId);
+
+    @Query("SELECT f.pokemonId FROM UserFavoritePokemon f WHERE f.userCode = :userCode")
+    List<Integer> findPokemonIdsByUserCode(@Param("userCode") Long userCode);
 }
