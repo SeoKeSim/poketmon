@@ -106,7 +106,46 @@ public class AuthController {
         }
     }
 
+    // AuthController.java에 추가
+    @PostMapping("/form-login")
+    public ResponseEntity<?> formLogin(@RequestParam String userId,
+                                       @RequestParam String userPw) {
+        try {
+            // 기존 로그인 로직 활용
+            LoginRequestDto requestDto = new LoginRequestDto();
+            requestDto.setUserId(userId);
+            requestDto.setUserPw(userPw);
 
+            LoginResponseDto loginResponse = userService.loginUser(requestDto);
+
+            if (loginResponse.isSuccess()) {
+                // JWT 토큰 생성
+                String token = jwtTokenProvider.createToken(
+                        loginResponse.getUserId(),
+                        loginResponse.getUserCode()
+                );
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("token", token);
+                response.put("userCode", loginResponse.getUserCode());
+                response.put("userId", loginResponse.getUserId());
+                response.put("userName", loginResponse.getUserName());
+                response.put("message", "로그인 성공");
+
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Invalid credentials");
+                error.put("message", loginResponse.getMessage());
+                return ResponseEntity.badRequest().body(error);
+            }
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Login failed");
+            error.put("message", "로그인 중 오류가 발생했습니다.");
+            return ResponseEntity.internalServerError().body(error);
+        }
+    }
 
     // 내부 클래스로 요청 DTO 정의
     public static class LoginRequest {

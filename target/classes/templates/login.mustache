@@ -47,12 +47,12 @@
         </form>
 
         <!-- JWT 로그인 폼 -->
-        <form action="/api/auth/jwt-login" method="post" class="auth-form" style="margin-top: 20px;">
+        <form action="/api/auth/form-login" method="post" class="auth-form" style="margin-top: 20px;">
             <div class="form-group">
                 <label for="jwtEmail">이메일 (JWT)</label>
                 <input type="text"
                        id="jwtEmail"
-                       name="email"
+                       name="userId"
                        placeholder="이메일을 입력하세요"
                        required>
             </div>
@@ -61,7 +61,7 @@
                 <label for="jwtPassword">비밀번호 (JWT)</label>
                 <input type="password"
                        id="jwtPassword"
-                       name="password"
+                       name="userPw"
                        placeholder="비밀번호를 입력하세요"
                        required>
             </div>
