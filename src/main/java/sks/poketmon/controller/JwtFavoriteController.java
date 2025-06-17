@@ -1,143 +1,96 @@
 package sks.poketmon.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import sks.poketmon.config.JwtTokenProvider;
+import sks.poketmon.dto.ApiResponse;
+import sks.poketmon.dto.FavoriteResponseDto;
+import sks.poketmon.dto.FavoriteRequestDto;
 import sks.poketmon.service.FavoriteService;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-@RestController
-@RequestMapping("/api/jwt/favorites")
+@Controller
+@RequiredArgsConstructor
 public class JwtFavoriteController {
 
-    @Autowired
-    private FavoriteService favoriteService;
+    private final FavoriteService favoriteService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    /**
-     * 즐겨찾기 추가
-     * POST /api/jwt/favorites
-     */
-    @PostMapping
-    public ResponseEntity<?> addFavorite(@RequestBody AddFavoriteRequest request,
-                                         HttpServletRequest httpRequest) {
-        try {
-            Long userCode = (Long) httpRequest.getAttribute("userCode");
-
-            boolean success = favoriteService.addFavoriteJwt(userCode, request.getPokemonId());
-
-            Map<String, Object> response = new HashMap<>();
-            if (success) {
-                response.put("success", true);
-                response.put("message", "즐겨찾기에 추가되었습니다.");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "이미 즐겨찾기에 등록된 포켓몬입니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "즐겨찾기 추가 중 오류가 발생했습니다.");
-            return ResponseEntity.internalServerError().body(response);
+    // ✅ 페이지 렌더링: 즐겨찾기 화면
+    @GetMapping("/jwt/favorites")
+    public String jwtFavoritesPage(HttpServletRequest request, Model model) {
+        String token = getTokenFromRequest(request);
+        if (token == null || !jwtTokenProvider.validateToken(token)) {
+            return "redirect:/users/login";
         }
+
+        Long userCode = jwtTokenProvider.getUserCode(token);
+        List<FavoriteResponseDto> favorites = favoriteService.getFavoriteList(userCode);
+        model.addAttribute("favorites", favorites);
+        model.addAttribute("favoriteCount", favorites.size());
+
+        return "favorites";
     }
 
-    /**
-     * 즐겨찾기 삭제
-     * DELETE /api/jwt/favorites/{pokemonId}
-     */
-    @DeleteMapping("/{pokemonId}")
-    public ResponseEntity<?> removeFavorite(@PathVariable Integer pokemonId,
-                                            HttpServletRequest httpRequest) {
-        try {
-            Long userCode = (Long) httpRequest.getAttribute("userCode");
 
-            boolean success = favoriteService.removeFavoriteJwt(userCode, pokemonId);
-
-            Map<String, Object> response = new HashMap<>();
-            if (success) {
-                response.put("success", true);
-                response.put("message", "즐겨찾기에서 삭제되었습니다.");
-                return ResponseEntity.ok(response);
-            } else {
-                response.put("success", false);
-                response.put("message", "즐겨찾기에서 찾을 수 없습니다.");
-                return ResponseEntity.badRequest().body(response);
-            }
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "즐겨찾기 삭제 중 오류가 발생했습니다.");
-            return ResponseEntity.internalServerError().body(response);
-        }
+    // ✅ 즐겨찾기 추가 (API)
+    @PostMapping("/api/jwt/favorites")
+    @ResponseBody
+    public ApiResponse<?> addFavorite(@RequestAttribute("userCode") Long userCode,
+                                      @RequestBody FavoriteRequestDto request) {
+        boolean success = favoriteService.addFavoriteJwt(userCode, request.getPokemonId());
+        return success
+                ? ApiResponse.success("즐겨찾기에 추가되었습니다.")
+                : ApiResponse.error("이미 즐겨찾기된 포켓몬입니다.");
     }
 
-    /**
-     * 즐겨찾기 목록 조회
-     * GET /api/jwt/favorites
-     */
-    @GetMapping
-    public ResponseEntity<?> getFavorites(HttpServletRequest httpRequest) {
-        try {
-            Long userCode = (Long) httpRequest.getAttribute("userCode");
-
-            List<Integer> favoriteIds = favoriteService.getFavoriteIds(userCode);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("favorites", favoriteIds);
-            response.put("count", favoriteIds.size());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "즐겨찾기 목록 조회 중 오류가 발생했습니다.");
-            return ResponseEntity.internalServerError().body(response);
-        }
+    // ✅ 즐겨찾기 삭제 (API)
+    @DeleteMapping("/api/jwt/favorites/{pokemonId}")
+    @ResponseBody
+    public ApiResponse<?> removeFavorite(@RequestAttribute("userCode") Long userCode,
+                                         @PathVariable Integer pokemonId) {
+        boolean success = favoriteService.removeFavoriteJwt(userCode, pokemonId);
+        return success
+                ? ApiResponse.success("즐겨찾기에서 삭제되었습니다.")
+                : ApiResponse.error("즐겨찾기 목록에 없습니다.");
     }
 
-    /**
-     * 즐겨찾기 상태 확인
-     * GET /api/jwt/favorites/check/{pokemonId}
-     */
-    @GetMapping("/check/{pokemonId}")
-    public ResponseEntity<?> checkFavorite(@PathVariable Integer pokemonId,
-                                           HttpServletRequest httpRequest) {
-        try {
-            Long userCode = (Long) httpRequest.getAttribute("userCode");
-
-            boolean isFavorite = favoriteService.isFavorite(userCode, pokemonId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("isFavorite", isFavorite);
-            response.put("pokemonId", pokemonId);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "즐겨찾기 상태 확인 중 오류가 발생했습니다.");
-            return ResponseEntity.internalServerError().body(response);
-        }
+    // ✅ 즐겨찾기 목록 조회 (API)
+    @GetMapping("/api/jwt/favorites")
+    @ResponseBody
+    public ApiResponse<List<Integer>> getFavorites(@RequestAttribute("userCode") Long userCode) {
+        List<Integer> favoriteIds = favoriteService.getFavoriteIds(userCode);
+        return ApiResponse.success(favoriteIds);
     }
 
-    // 요청 DTO
-    public static class AddFavoriteRequest {
-        private Integer pokemonId;
+    // ✅ 즐겨찾기 여부 확인 (API)
+    @GetMapping("/api/jwt/favorites/check/{pokemonId}")
+    @ResponseBody
+    public ApiResponse<Boolean> checkFavorite(@RequestAttribute("userCode") Long userCode,
+                                              @PathVariable Integer pokemonId) {
+        boolean exists = favoriteService.isFavorite(userCode, pokemonId);
+        return ApiResponse.success(exists);
+    }
 
-        public Integer getPokemonId() {
-            return pokemonId;
-        }
+    // ✅ 즐겨찾기 개수 확인 (API)
+    @GetMapping("/api/jwt/favorites/count")
+    @ResponseBody
+    public ApiResponse<Integer> getFavoriteCount(@RequestAttribute("userCode") Long userCode) {
+        List<Integer> favoriteIds = favoriteService.getFavoriteIds(userCode);
+        return ApiResponse.success(favoriteIds.size());
+    }
 
-        public void setPokemonId(Integer pokemonId) {
-            this.pokemonId = pokemonId;
+    // ✅ 헤더에서 토큰 꺼내는 유틸
+    private String getTokenFromRequest(HttpServletRequest request) {
+        String bearer = request.getHeader("Authorization");
+        if (bearer != null && bearer.startsWith("Bearer ")) {
+            return bearer.substring(7);
         }
+        return null;
     }
 }

@@ -2,6 +2,7 @@ package sks.poketmon.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -54,6 +55,14 @@ public class JwtTokenProvider {
                 .get("userCode", Long.class);
     }
 
+    private Claims getClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(key)  // secretKey → key로 수정
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     // JWT 토큰 유효성 검증
     public boolean validateToken(String token) {
         try {
@@ -75,5 +84,13 @@ public class JwtTokenProvider {
         return null;
     }
 
+    public Long getUserCodeFromRequest(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        String token = resolveToken(authHeader);
+        if (token != null && validateToken(token)) {
+            return getUserCode(token);  // 기존 메서드 재사용
+        }
+        return null;
+    }
 
 }

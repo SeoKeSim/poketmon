@@ -1,5 +1,6 @@
 package sks.poketmon.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,26 +24,41 @@ public class PokemonController {
 
     // 메인 페이지 (검색 폼)
     @GetMapping("/")
-    public String index(HttpSession session, Model model) {
-        // 세션에서 로그인 정보 가져와서 모델에 추가
+    public String index(HttpSession session, HttpServletRequest request, Model model) {
+        // 세션 로그인 사용자 확인
         LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
         if (loginUser != null) {
             model.addAttribute("loginUser", loginUser);
             model.addAttribute("userName", loginUser.getUserName());
         }
+
+        // JWT 로그인 사용자 확인
+        LoginResponseDto jwtUser = (LoginResponseDto) request.getAttribute("jwtUser");
+        if (jwtUser != null) {
+            model.addAttribute("jwtUser", jwtUser);
+        }
+
         return "index";
     }
 
     // 포켓몬 검색 처리
     @PostMapping("/search")
-    public String searchPokemon(@RequestParam("query") String query, Model model, HttpSession session) {
+    public String searchPokemon(@RequestParam("query") String query, Model model,
+                                HttpSession session, HttpServletRequest request) {
 
         logger.info("포켓몬 검색 요청: {}", query);
 
+        // 세션 로그인 사용자 확인
         LoginResponseDto loginUser = (LoginResponseDto) session.getAttribute("loginUser");
         if (loginUser != null) {
             model.addAttribute("loginUser", loginUser);
             model.addAttribute("userName", loginUser.getUserName());
+        }
+
+        // JWT 로그인 사용자 확인
+        LoginResponseDto jwtUser = (LoginResponseDto) request.getAttribute("jwtUser");
+        if (jwtUser != null) {
+            model.addAttribute("jwtUser", jwtUser);
         }
 
         if (query == null || query.trim().isEmpty()) {

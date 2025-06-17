@@ -2,6 +2,7 @@ package sks.poketmon.controller;
 
 import ch.qos.logback.core.model.Model;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ public class AuthController {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
         try {
@@ -44,23 +46,28 @@ public class AuthController {
                         loginResponse.getUserCode()
                 );
 
+                // 데이터를 data 객체로 감싸서 반환 (login.mustache 형식에 맞춤)
+                Map<String, Object> data = new HashMap<>();
+                data.put("token", token);
+                data.put("userCode", loginResponse.getUserCode());
+                data.put("userId", loginResponse.getUserId());
+                data.put("userName", loginResponse.getUserName());
+
                 Map<String, Object> response = new HashMap<>();
-                response.put("token", token);
-                response.put("userCode", loginResponse.getUserCode());
-                response.put("userId", loginResponse.getUserId());
-                response.put("userName", loginResponse.getUserName());
+                response.put("success", true);
+                response.put("data", data);
                 response.put("message", "로그인 성공");
 
                 return ResponseEntity.ok(response);
             } else {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Invalid credentials");
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
                 error.put("message", loginResponse.getMessage());
                 return ResponseEntity.badRequest().body(error);
             }
         } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Login failed");
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
             error.put("message", "로그인 중 오류가 발생했습니다.");
             return ResponseEntity.internalServerError().body(error);
         }
@@ -169,5 +176,39 @@ public class AuthController {
         public void setUserPw(String userPw) { this.userPw = userPw; }
         public String getUserName() { return userName; }
         public void setUserName(String userName) { this.userName = userName; }
+    }
+
+    // JWT 토큰 검증 API 추가 (login.mustache에서 호출함)
+    @GetMapping("/validate")
+    public ResponseEntity<?> validateToken(HttpServletRequest request) {
+        try {
+            String token = jwtTokenProvider.resolveToken(request.getHeader("Authorization"));
+
+            if (token != null && jwtTokenProvider.validateToken(token)) {
+                String userId = jwtTokenProvider.getUserId(token);
+                Long userCode = jwtTokenProvider.getUserCode(token);
+
+                Map<String, Object> data = new HashMap<>();
+                data.put("userId", userId);
+                data.put("userCode", userCode);
+
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("data", data);
+                response.put("message", "유효한 토큰입니다.");
+
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "유효하지 않은 토큰입니다.");
+                return ResponseEntity.badRequest().body(error);
+            }
+        } catch (Exception e) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "토큰 검증 중 오류가 발생했습니다.");
+            return ResponseEntity.internalServerError().body(error);
+        }
     }
 }

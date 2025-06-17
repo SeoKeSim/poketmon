@@ -8,21 +8,18 @@
 </head>
 <body>
 {{>header}}
-
 <div class="auth-container">
     <div class="auth-form-wrapper">
         <div class="auth-header">
             <img src="/image/pokemon_logo.png" alt="포켓몬 로고" class="auth-logo">
             <h2>로그인</h2>
         </div>
-
         {{#errorMessage}}
             <div class="error-message">
                 {{errorMessage}}
             </div>
         {{/errorMessage}}
-
-        <!-- 기존 로그인 폼 -->
+        <!-- 기존 세션 로그인 폼 -->
         <form action="/users/login" method="post" class="auth-form">
             <div class="form-group">
                 <label for="userId">사용자 ID</label>
@@ -33,7 +30,6 @@
                        placeholder="사용자 ID를 입력하세요"
                        required>
             </div>
-
             <div class="form-group">
                 <label for="userPw">비밀번호</label>
                 <input type="password"
@@ -42,21 +38,18 @@
                        placeholder="비밀번호를 입력하세요"
                        required>
             </div>
-
             <button type="submit" class="auth-btn-primary">세션 로그인</button>
         </form>
-
-        <!-- JWT 로그인 폼 -->
-        <form action="/api/auth/form-login" method="post" class="auth-form" style="margin-top: 20px;">
+        <!-- JWT 로그인 폼 (AJAX 처리) -->
+        <form id="jwtLoginForm" class="auth-form" style="margin-top: 20px;">
             <div class="form-group">
-                <label for="jwtEmail">이메일 (JWT)</label>
+                <label for="jwtUserId">사용자 ID (JWT)</label>
                 <input type="text"
-                       id="jwtEmail"
+                       id="jwtUserId"
                        name="userId"
-                       placeholder="이메일을 입력하세요"
+                       placeholder="사용자 ID를 입력하세요"
                        required>
             </div>
-
             <div class="form-group">
                 <label for="jwtPassword">비밀번호 (JWT)</label>
                 <input type="password"
@@ -65,15 +58,79 @@
                        placeholder="비밀번호를 입력하세요"
                        required>
             </div>
-
             <button type="submit" class="auth-btn-secondary">JWT 로그인</button>
         </form>
-
         <div class="auth-links">
             <p>계정이 없으신가요? <a href="/users/register">회원가입</a></p>
             <p><a href="/">메인 페이지로 돌아가기</a></p>
         </div>
     </div>
 </div>
-</body>
-</html>
+<script>
+    // JWT 로그인 폼 처리
+    document.getElementById('jwtLoginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const userId = document.getElementById('jwtUserId').value;
+        const password = document.getElementById('jwtPassword').value;
+
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    userPw: password
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                // JWT 토큰 저장 (localStorage 또는 sessionStorage)
+                localStorage.setItem('jwtToken', result.data.token);
+                // 또는 세션 스토리지 사용하려면:
+                // sessionStorage.setItem('jwtToken', result.data.token);
+
+                alert('JWT 로그인 성공!');
+                // 메인 페이지로 리다이렉트
+                window.location.href = '/';
+            } else {
+                // 로그인 실패
+                alert(result.message || 'JWT 로그인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('JWT 로그인 오류:', error);
+            alert('로그인 중 오류가 발생했습니다.');
+        }
+    });
+
+    // 페이지 로드 시 JWT 토큰이 있으면 메인 페이지로 리다이렉트
+    document.addEventListener('DOMContentLoaded', function() {
+        const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+        if (token) {
+            // 토큰이 유효한지 확인 (선택사항)
+            fetch('/api/auth/validate', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            // 이미 로그인된 상태면 메인 페이지로
+                            window.location.href = '/';
+                        } else {
+                            // 토큰이 유효하지 않으면 제거
+                            localStorage.removeItem('jwtToken');
+                            sessionStorage.removeItem('jwtToken');
+                        }
+                    })
+                    .catch(error => {
+                        console.log('토큰 검증 실패:', error);
+                    });
+        }
+    });
+</script>
