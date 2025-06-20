@@ -27,9 +27,13 @@ public class WebConfig implements WebMvcConfigurer {
 
         // 웹 페이지용 JWT 인터셉터 (새로 추가)
         registry.addInterceptor(jwtWebInterceptor)
-                .addPathPatterns("/**")  // 모든 웹 페이지에 적용
+                .addPathPatterns(
+                        "/jwt/**",          // JWT가 필요한 웹 페이지들
+                        "/favorites/**",    // 즐겨찾기 관련 페이지들
+                        "/profile/**"       // 프로필 관련 페이지들 (있다면)
+                )
                 .excludePathPatterns(
-                        "/api/**",          // API는 제외
+                        "/api/**",          // API는 제외 (다른 인터셉터가 처리)
                         "/css/**",          // 정적 리소스 제외
                         "/js/**",
                         "/image/**",
@@ -37,7 +41,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "/h2-console/**",
                         "/users/login",     // 로그인 페이지는 제외
                         "/users/register",  // 회원가입 페이지는 제외
-                        "/users/register-success"
+                        "/users/register-success",
+                        "/",                // 메인 페이지는 제외 (로그인 안해도 접근 가능)
+                        "/pokemon/**"       // 포켓몬 상세 페이지들 (로그인 안해도 접근 가능하다면)
                 );
     }
 }

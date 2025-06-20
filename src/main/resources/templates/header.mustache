@@ -1,5 +1,7 @@
 <head>
     <link rel="stylesheet" href="/css/header.css">
+    <!-- JWT 유틸리티 스크립트 추가 -->
+    <script src="/js/jwt-utils.js"></script>
 </head>
 <header class="header">
     <div class="header-container">
@@ -66,18 +68,22 @@
         if (favoriteCountBadge) {
             updateHeaderFavoriteCount();
         }
+
+        // JWT 로그인 상태 확인하여 헤더 동적 업데이트
+        updateHeaderForJWT();
     });
 
     async function updateHeaderFavoriteCount() {
         try {
-            const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+            // JwtUtils 사용으로 변경
+            const headers = JwtUtils ? JwtUtils.getAuthHeaders() : { 'Content-Type': 'application/json' };
+            const token = JwtUtils ? JwtUtils.getToken() : null;
+
             let apiUrl = '/api/favorites/count';
-            let headers = { 'Content-Type': 'application/json' };
 
             // JWT 토큰이 있으면 JWT API 사용
             if (token) {
                 apiUrl = '/api/jwt/favorites/count';
-                headers['Authorization'] = `Bearer ${token}`;
             }
 
             const response = await fetch(apiUrl, { headers });
@@ -95,42 +101,8 @@
         }
     }
 
-    // JWT 로그아웃 함수
-    function jwtLogout() {
-        if (confirm('로그아웃 하시겠습니까?')) {
-            localStorage.removeItem('jwtToken');
-            sessionStorage.removeItem('jwtToken');
-            location.reload();
-        }
-    }
-
-    // JWT 토큰이 있으면 Authorization 헤더 반환
-    function getAuthHeaders() {
-        const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
-        if (token) {
-            return {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            };
-        }
-        return {
-            'Content-Type': 'application/json'
-        };
-    }
-
-    // 기존 스크립트 부분에 추가
-    document.addEventListener('DOMContentLoaded', function() {
-        const favoriteCountBadge = document.getElementById('headerFavoriteCount');
-        if (favoriteCountBadge) {
-            updateHeaderFavoriteCount();
-        }
-
-        // JWT 로그인 상태 확인하여 헤더 동적 업데이트
-        updateHeaderForJWT();
-    });
-
     async function updateHeaderForJWT() {
-        const token = localStorage.getItem('jwtToken') || sessionStorage.getItem('jwtToken');
+        const token = JwtUtils ? JwtUtils.getToken() : null;
 
         // 서버에서 이미 로그인 상태라면 JWT 업데이트 안함
         const isServerLoggedIn = document.querySelector('.user-info') !== null;
@@ -152,8 +124,9 @@
                     updateHeaderToJWTLoggedIn(result.data.userId);
                 } else {
                     // 토큰이 유효하지 않으면 제거
-                    localStorage.removeItem('jwtToken');
-                    sessionStorage.removeItem('jwtToken');
+                    if (JwtUtils) {
+                        JwtUtils.removeToken();
+                    }
                 }
             } catch (error) {
                 console.log('토큰 검증 실패:', error);
@@ -166,7 +139,7 @@
         if (headerNav) {
             headerNav.innerHTML = `
             <div class="nav-menu">
-                <a href="/jwt/favorites" class="nav-link favorites-link">
+                <a href="javascript:void(0);" onclick="goToFavorites()" class="nav-link favorites-link">
                     <span class="favorites-icon">⭐</span>
                     <span class="favorites-text">내 즐겨찾기</span>
                     <span class="favorites-count-badge" id="headerFavoriteCount"></span>
@@ -183,8 +156,12 @@
         }
     }
 
+    // 하위 호환성을 위해 기존 함수들 유지
+    function getAuthHeaders() {
+        return JwtUtils ? JwtUtils.getAuthHeaders() : { 'Content-Type': 'application/json' };
+    }
+
     // 전역 함수로 다른 페이지에서도 사용할 수 있도록
     window.updateHeaderFavoriteCount = updateHeaderFavoriteCount;
     window.getAuthHeaders = getAuthHeaders;
-    window.jwtLogout = jwtLogout;
 </script>
