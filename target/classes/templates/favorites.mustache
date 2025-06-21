@@ -94,22 +94,32 @@
             return;
         }
 
+        const token = JwtUtils?.getToken();
+        const isJwt = !!token;
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        if (isJwt) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        const url = isJwt
+                ? `/api/jwt/favorites/${pokemonId}`
+                : `/api/favorites/${pokemonId}`;
+
         try {
-            const response = await fetch(`/api/favorites/${pokemonId}`, {
+            const response = await fetch(url, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: headers
             });
 
             const result = await response.json();
 
             if (result.success) {
-                // 카드 제거 애니메이션
                 const card = document.querySelector(`[data-pokemon-id="${pokemonId}"]`);
                 card.style.opacity = '0';
                 card.style.transform = 'scale(0.8)';
-
                 setTimeout(() => {
                     card.remove();
                     updateFavoriteCount();
@@ -125,6 +135,7 @@
             showMessage('네트워크 오류가 발생했습니다.', 'error');
         }
     }
+
 
     // 포켓몬 검색 (상세보기)
     function searchPokemon(pokemonName) {

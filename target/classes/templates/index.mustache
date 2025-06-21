@@ -42,8 +42,32 @@
 
     <div class="help-text">
         포켓몬의 이름(한글/영어) 또는 도감 번호로 검색할 수 있습니다.<br>
-        현재 1세대 포켓몬의 한글 검색을 지원합니다.
     </div>
+
+    <button type="button" class="search-btn random-btn" onclick="searchRandomPokemon()">랜덤 포켓몬</button>
+
 </div>
+
+<script>
+    function searchRandomPokemon() {
+        const maxId = 1025; // 현재 도감 최대 번호
+        const randomId = Math.floor(Math.random() * maxId) + 1;
+
+        // 동적으로 폼 생성해서 POST 요청
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/search';
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'query';
+        input.value = randomId;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
+</script>
+
 </body>
 </html>
