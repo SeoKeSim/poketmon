@@ -75,7 +75,7 @@ public class PokemonService {
 
             // 4. 성공했고 DB에 없는 포켓몬이면 species 정보를 가져와서 DB에 저장
             if (!pokemonNameRepository.existsByPokemonId(pokemon.getId())) {
-                savePokemonNameFromSpecies(pokemon.getId());
+                savePokemonNameFromSpecies(pokemon.getId(), pokemon.getName());
             }
 
             // 5. pokemonDto에 한글 이름 세팅
@@ -144,42 +144,162 @@ public class PokemonService {
         return null;
     }
 
-    // Pokemon Species API에서 다국어 이름 가져와서 DB에 저장
-    private void savePokemonNameFromSpecies(int pokemonId) {
+    // Pokemon Species API에서 다국어 이름 가져와서 DB에 저장 (개선됨)
+    private void savePokemonNameFromSpecies(int pokemonId, String actualPokemonName) {
         try {
-            String speciesUrl = POKEAPI_SPECIES_URL + pokemonId;
-            logger.debug("Species API 호출: {}", speciesUrl);
+            // 먼저 하드코딩된 특수 케이스들을 확인
+            String koreanName = getHardcodedKoreanName(pokemonId, actualPokemonName);
+
+            if (koreanName != null) {
+                // 하드코딩된 이름이 있는 경우
+                PokemonName pokemonName = new PokemonName(pokemonId, actualPokemonName, koreanName, "ko");
+                pokemonNameRepository.save(pokemonName);
+                logger.debug("하드코딩된 포켓몬 이름 저장: {} -> {}", actualPokemonName, koreanName);
+                return;
+            }
+
+            // Species API에서 기본 종족 정보 가져오기
+            int speciesId = getSpeciesIdFromPokemonId(pokemonId, actualPokemonName);
+            String speciesUrl = POKEAPI_SPECIES_URL + speciesId;
+            logger.debug("Species API 호출: {} (Pokemon ID: {}, Species ID: {})", speciesUrl, pokemonId, speciesId);
 
             ResponseEntity<PokemonSpeciesDto> response = restTemplate.getForEntity(speciesUrl, PokemonSpeciesDto.class);
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 PokemonSpeciesDto species = response.getBody();
-                String englishName = species.getName();
-                String koreanName = species.getKoreanName();
+                String baseKoreanName = species.getKoreanNameByStream(); // getKoreanName() 대신 더 안전한 메서드 사용
 
                 // 한국어 이름이 있으면 저장
-                if (koreanName != null && !koreanName.equals(englishName)) {
-                    PokemonName pokemonName = new PokemonName(pokemonId, englishName, koreanName, "ko");
+                if (baseKoreanName != null && !baseKoreanName.equals(species.getName())) {
+                    // 폼 변종인 경우 기본 이름에 폼 정보 추가
+                    String finalKoreanName = buildFormName(actualPokemonName, baseKoreanName);
+
+                    PokemonName pokemonName = new PokemonName(pokemonId, actualPokemonName, finalKoreanName, "ko");
                     pokemonNameRepository.save(pokemonName);
-                    logger.debug("포켓몬 이름 저장: {} -> {}", englishName, koreanName);
+                    logger.debug("포켓몬 이름 저장: {} -> {} (Species: {})", actualPokemonName, finalKoreanName, baseKoreanName);
+                } else {
+                    logger.debug("한국어 이름을 찾을 수 없음: {}", actualPokemonName);
                 }
             }
+        } catch (HttpClientErrorException.NotFound e) {
+            logger.warn("Species 정보를 찾을 수 없음 (Pokemon ID: {}, Name: {})", pokemonId, actualPokemonName);
         } catch (Exception e) {
             // Species 정보 가져오기 실패해도 메인 검색에는 영향 없음
-            logger.warn("Species 정보 저장 실패 (Pokemon ID: {}): {}", pokemonId, e.getMessage());
+            logger.warn("Species 정보 저장 실패 (Pokemon ID: {}, Name: {}): {}", pokemonId, actualPokemonName, e.getMessage());
         }
     }
 
-    // 초기 데이터 로딩 (애플리케이션 시작 시 실행)
+    // 특수 케이스 하드코딩 (폼 변종 포켓몬들)
+    private String getHardcodedKoreanName(int pokemonId, String englishName) {
+        Map<String, String> specialCases = new HashMap<>();
+
+        // Morpeko 관련
+        specialCases.put("morpeko-full-belly", "모르페코");
+        specialCases.put("morpeko-hangry", "모르페코 (배고픈모습)");
+
+        // Toxapex 등 다른 특수 케이스들 추가 가능
+        // specialCases.put("toxapex", "더시마루");
+
+        // 추가 특수 케이스들...
+        specialCases.put("minior-red-meteor", "미뇰 (빨간색 유성)");
+        specialCases.put("minior-orange-meteor", "미뇽 (주황색 유성)");
+        specialCases.put("mimikyu-disguised", "따라큐 (둔갑)");
+        specialCases.put("mimikyu-busted", "따라큐 (들킨)");
+
+        return specialCases.get(englishName.toLowerCase());
+    }
+
+    // 폼 이름 생성 (기본 이름 + 폼 정보)
+    private String buildFormName(String actualName, String baseKoreanName) {
+        if (actualName.contains("-")) {
+            String[] parts = actualName.split("-");
+            if (parts.length > 1) {
+                String formPart = parts[parts.length - 1];
+
+                // 폼 이름 매핑
+                Map<String, String> formNames = new HashMap<>();
+                formNames.put("alolan", "알로라");
+                formNames.put("galarian", "가라르");
+                formNames.put("hisuian", "히스이");
+                formNames.put("paldean", "팔데아");
+                formNames.put("mega", "메가");
+                formNames.put("primal", "원시");
+                formNames.put("origin", "오리진");
+                formNames.put("sky", "스카이");
+                formNames.put("hangry", "배고픈모습");
+                formNames.put("full-belly", "포만한모습");
+
+                String koreanForm = formNames.get(formPart.toLowerCase());
+                if (koreanForm != null) {
+                    return baseKoreanName + " (" + koreanForm + ")";
+                }
+            }
+        }
+
+        return baseKoreanName;
+    }
+
+    // Pokemon ID로부터 Species ID 결정 (폼 변종 처리)
+    private int getSpeciesIdFromPokemonId(int pokemonId, String pokemonName) {
+        // 대부분의 포켓몬은 Pokemon ID와 Species ID가 동일
+        // 하지만 일부 폼 변종들은 다른 Species를 참조할 수 있음
+
+        // 폼 변종인 경우 기본 종족 ID 반환
+        if (pokemonName.contains("-")) {
+            // 특수 케이스들 처리
+            Map<String, Integer> specialSpeciesIds = new HashMap<>();
+
+            // Morpeko: 둘 다 같은 species (877)
+            specialSpeciesIds.put("morpeko-full-belly", 877);
+            specialSpeciesIds.put("morpeko-hangry", 877);
+
+            // Mimikyu: 둘 다 같은 species (778)
+            specialSpeciesIds.put("mimikyu-disguised", 778);
+            specialSpeciesIds.put("mimikyu-busted", 778);
+
+            // Minior: 모든 색상이 같은 species (774)
+            String[] miniorForms = {"red-meteor", "orange-meteor", "yellow-meteor",
+                    "green-meteor", "blue-meteor", "indigo-meteor", "violet-meteor",
+                    "red", "orange", "yellow", "green", "blue", "indigo", "violet"};
+            for (String form : miniorForms) {
+                specialSpeciesIds.put("minior-" + form, 774);
+            }
+
+            // Wishiwashi
+            specialSpeciesIds.put("wishiwashi-solo", 746);
+            specialSpeciesIds.put("wishiwashi-school", 746);
+
+            Integer speciesId = specialSpeciesIds.get(pokemonName.toLowerCase());
+            if (speciesId != null) {
+                return speciesId;
+            }
+
+            // 일반적인 경우: 하이픈 앞의 이름으로 species 추정
+            // 예: "pikachu-gmax" -> species는 25 (pikachu)
+            // 하지만 이건 복잡하므로 일단 pokemonId 사용
+        }
+
+        return pokemonId;
+    }
+
+    // 초기 데이터 로딩 (애플리케이션 시작 시 실행) - 개선됨
     public void loadInitialPokemonNames(int maxPokemon) {
         logger.info("포켓몬 이름 데이터 로딩 시작...");
 
         for (int i = 1; i <= maxPokemon; i++) {
             if (!pokemonNameRepository.existsByPokemonId(i)) {
                 try {
-                    savePokemonNameFromSpecies(i);
+                    // 먼저 기본 포켓몬 정보 가져오기
+                    String url = POKEAPI_BASE_URL + i;
+                    ResponseEntity<PokemonDto> response = restTemplate.getForEntity(url, PokemonDto.class);
+
+                    if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+                        PokemonDto pokemon = response.getBody();
+                        savePokemonNameFromSpecies(i, pokemon.getName());
+                    }
+
                     // API 호출 제한을 위한 딜레이
-                    Thread.sleep(100);
+                    Thread.sleep(150); // 약간 늘림
                 } catch (Exception e) {
                     logger.error("Pokemon ID {} 로딩 실패: {}", i, e.getMessage());
                 }
